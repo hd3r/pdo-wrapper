@@ -8,10 +8,8 @@ use PDO;
 use PDOException;
 use PdoWrapper\Exception\ConnectionException;
 
-class SqliteDriver
+class SqliteDriver extends AbstractDriver
 {
-    private PDO $pdo;
-
     public function __construct(?string $path = null)
     {
         $path = $path ?? $_ENV['DB_SQLITE_PATH'] ?? ':memory:';
@@ -34,10 +32,5 @@ class SqliteDriver
                 debugMessage: sprintf('SQLite connection failed: %s', $e->getMessage())
             );
         }
-    }
-
-    public function getPdo(): PDO
-    {
-        return $this->pdo;
     }
 }

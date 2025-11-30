@@ -8,10 +8,8 @@ use PDO;
 use PDOException;
 use PdoWrapper\Exception\ConnectionException;
 
-class MySqlDriver
+class MySqlDriver extends AbstractDriver
 {
-    private PDO $pdo;
-
     /**
      * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, charset?: string, options?: array} $config
      */
@@ -57,10 +55,5 @@ class MySqlDriver
                 debugMessage: sprintf('MySQL connection to %s:%d failed: %s', $host, $port, $e->getMessage())
             );
         }
-    }
-
-    public function getPdo(): PDO
-    {
-        return $this->pdo;
     }
 }

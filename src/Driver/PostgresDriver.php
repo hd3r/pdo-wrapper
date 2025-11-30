@@ -8,10 +8,8 @@ use PDO;
 use PDOException;
 use PdoWrapper\Exception\ConnectionException;
 
-class PostgresDriver
+class PostgresDriver extends AbstractDriver
 {
-    private PDO $pdo;
-
     /**
      * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, options?: array} $config
      */
@@ -55,10 +53,5 @@ class PostgresDriver
                 debugMessage: sprintf('PostgreSQL connection to %s:%d failed: %s', $host, $port, $e->getMessage())
             );
         }
-    }
-
-    public function getPdo(): PDO
-    {
-        return $this->pdo;
     }
 }

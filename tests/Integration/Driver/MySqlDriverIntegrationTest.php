@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace PdoWrapper\Tests\Integration\Driver;
 
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use PdoWrapper\DatabaseInterface;
 use PdoWrapper\Driver\MySqlDriver;
+use PdoWrapper\Exception\ConnectionException;
+use PdoWrapper\Exception\TransactionException;
 
 class MySqlDriverIntegrationTest extends TestCase
 {
@@ -18,30 +22,53 @@ class MySqlDriverIntegrationTest extends TestCase
         'port' => 3306,
     ];
 
-    public function testConnectsToMySql(): void
-    {
-        $driver = new MySqlDriver(self::$config);
+    private MySqlDriver $driver;
 
-        $this->assertInstanceOf(PDO::class, $driver->getPdo());
+    protected function setUp(): void
+    {
+        $this->driver = new MySqlDriver(self::$config);
     }
 
-    public function testCanExecuteQuery(): void
+    public function testImplementsDatabaseInterface(): void
     {
-        $driver = new MySqlDriver(self::$config);
-        $pdo = $driver->getPdo();
+        $this->assertInstanceOf(DatabaseInterface::class, $this->driver);
+    }
 
-        $stmt = $pdo->query('SELECT 1 as test');
-        $result = $stmt->fetch();
+    public function testConnectsToMySql(): void
+    {
+        $this->assertInstanceOf(PDO::class, $this->driver->getPdo());
+    }
 
-        $this->assertSame(1, $result['test']);
+    public function testQueryReturnsStatement(): void
+    {
+        $stmt = $this->driver->query('SELECT 1 as test');
+
+        $this->assertInstanceOf(PDOStatement::class, $stmt);
+        $this->assertSame(1, $stmt->fetch()['test']);
+    }
+
+    public function testExecuteReturnsAffectedRows(): void
+    {
+        $this->driver->execute('CREATE TEMPORARY TABLE test_mysql (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))');
+
+        $affected = $this->driver->execute("INSERT INTO test_mysql (name) VALUES (?)", ['hello']);
+
+        $this->assertSame(1, $affected);
+    }
+
+    public function testLastInsertId(): void
+    {
+        $this->driver->execute('CREATE TEMPORARY TABLE test_mysql2 (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))');
+        $this->driver->execute("INSERT INTO test_mysql2 (name) VALUES (?)", ['hello']);
+
+        $id = $this->driver->lastInsertId();
+
+        $this->assertSame('1', $id);
     }
 
     public function testConnectionUsesUtf8mb4(): void
     {
-        $driver = new MySqlDriver(self::$config);
-        $pdo = $driver->getPdo();
-
-        $stmt = $pdo->query("SHOW VARIABLES LIKE 'character_set_client'");
+        $stmt = $this->driver->query("SHOW VARIABLES LIKE 'character_set_client'");
         $result = $stmt->fetch();
 
         $this->assertSame('utf8mb4', $result['Value']);
@@ -49,31 +76,58 @@ class MySqlDriverIntegrationTest extends TestCase
 
     public function testConnectionUsesExceptionErrorMode(): void
     {
-        $driver = new MySqlDriver(self::$config);
-        $pdo = $driver->getPdo();
-
-        $errorMode = $pdo->getAttribute(PDO::ATTR_ERRMODE);
+        $errorMode = $this->driver->getPdo()->getAttribute(PDO::ATTR_ERRMODE);
 
         $this->assertSame(PDO::ERRMODE_EXCEPTION, $errorMode);
     }
 
     public function testConnectionUsesFetchAssoc(): void
     {
-        $driver = new MySqlDriver(self::$config);
-        $pdo = $driver->getPdo();
-
-        $fetchMode = $pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
+        $fetchMode = $this->driver->getPdo()->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
 
         $this->assertSame(PDO::FETCH_ASSOC, $fetchMode);
     }
 
     public function testConnectionDisablesEmulatedPrepares(): void
     {
-        $driver = new MySqlDriver(self::$config);
-        $pdo = $driver->getPdo();
-
-        $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
+        $emulate = $this->driver->getPdo()->getAttribute(PDO::ATTR_EMULATE_PREPARES);
 
         $this->assertFalse($emulate);
+    }
+
+    public function testTransactionCommitWithoutBeginThrowsException(): void
+    {
+        $this->expectException(TransactionException::class);
+
+        $this->driver->commit();
+    }
+
+    public function testTransactionRollbackWithoutBeginThrowsException(): void
+    {
+        $this->expectException(TransactionException::class);
+
+        $this->driver->rollback();
+    }
+
+    public function testNestedTransactionBeginThrowsException(): void
+    {
+        $this->driver->beginTransaction();
+
+        $this->expectException(TransactionException::class);
+
+        $this->driver->beginTransaction();
+    }
+
+    public function testTransactionExceptionHasDebugMessage(): void
+    {
+        try {
+            $this->driver->commit();
+        } catch (TransactionException $e) {
+            $this->assertSame('Failed to commit transaction', $e->getMessage());
+            $this->assertNotNull($e->getDebugMessage());
+            return;
+        }
+
+        $this->fail('Expected TransactionException was not thrown');
     }
 }

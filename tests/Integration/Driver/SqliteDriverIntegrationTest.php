@@ -5,11 +5,21 @@ declare(strict_types=1);
 namespace PdoWrapper\Tests\Integration\Driver;
 
 use PDO;
+use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use PdoWrapper\DatabaseInterface;
 use PdoWrapper\Driver\SqliteDriver;
+use PdoWrapper\Exception\ConnectionException;
 
 class SqliteDriverIntegrationTest extends TestCase
 {
+    public function testImplementsDatabaseInterface(): void
+    {
+        $driver = new SqliteDriver();
+
+        $this->assertInstanceOf(DatabaseInterface::class, $driver);
+    }
+
     public function testConnectsToMemoryDatabase(): void
     {
         $driver = new SqliteDriver();
@@ -24,30 +34,35 @@ class SqliteDriverIntegrationTest extends TestCase
         $this->assertInstanceOf(PDO::class, $driver->getPdo());
     }
 
-    public function testCanExecuteQuery(): void
+    public function testQueryReturnsStatement(): void
     {
         $driver = new SqliteDriver();
-        $pdo = $driver->getPdo();
 
-        $stmt = $pdo->query('SELECT 1 as test');
-        $result = $stmt->fetch();
+        $stmt = $driver->query('SELECT 1 as test');
 
-        $this->assertSame(1, $result['test']);
+        $this->assertInstanceOf(PDOStatement::class, $stmt);
+        $this->assertSame(1, $stmt->fetch()['test']);
     }
 
-    public function testCanCreateTableAndInsert(): void
+    public function testExecuteReturnsAffectedRows(): void
     {
         $driver = new SqliteDriver();
-        $pdo = $driver->getPdo();
+        $driver->execute('CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)');
 
-        $pdo->exec('CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)');
-        $pdo->exec("INSERT INTO test (name) VALUES ('hello')");
+        $affected = $driver->execute("INSERT INTO test (name) VALUES (?)", ['hello']);
 
-        $stmt = $pdo->query('SELECT * FROM test');
-        $result = $stmt->fetch();
+        $this->assertSame(1, $affected);
+    }
 
-        $this->assertSame(1, $result['id']);
-        $this->assertSame('hello', $result['name']);
+    public function testLastInsertId(): void
+    {
+        $driver = new SqliteDriver();
+        $driver->execute('CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)');
+        $driver->execute("INSERT INTO test (name) VALUES (?)", ['hello']);
+
+        $id = $driver->lastInsertId();
+
+        $this->assertSame('1', $id);
     }
 
     public function testConnectionUsesExceptionErrorMode(): void
@@ -85,11 +100,17 @@ class SqliteDriverIntegrationTest extends TestCase
     {
         $_ENV['DB_SQLITE_PATH'] = '/some/other/path.db';
 
-        // Explicit :memory: should override ENV
         $driver = new SqliteDriver(':memory:');
 
         $this->assertInstanceOf(PDO::class, $driver->getPdo());
 
         unset($_ENV['DB_SQLITE_PATH']);
+    }
+
+    public function testInvalidPathThrowsConnectionException(): void
+    {
+        $this->expectException(ConnectionException::class);
+
+        new SqliteDriver('/nonexistent/directory/that/does/not/exist/test.db');
     }
 }
