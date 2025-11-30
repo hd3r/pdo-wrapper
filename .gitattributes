@@ -1,0 +1,8 @@
+# Export-ignore für schlanke Releases
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/phpunit.xml.dist export-ignore
+/tests export-ignore
+/.github export-ignore
+/coverage export-ignore
+/.phpunit.cache export-ignore
