@@ -428,6 +428,51 @@ $db->insert('mydb.users', ['name' => 'John']);
 $db->table('mydb.users')->where('id', 1)->first();
 ```
 
+## Security
+
+This library protects against SQL injection through:
+
+- **Prepared statements** for all values (WHERE, INSERT, UPDATE)
+- **Identifier quoting** for column and table names
+- **Operator whitelist** validation (only `=`, `!=`, `<>`, `<`, `>`, `<=`, `>=`, `LIKE`, `NOT LIKE`, `IS`, `IS NOT`)
+
+### Important: User Input in Column Names
+
+The `select()` method allows expressions with parentheses to support aggregate functions like `COUNT(*)`, `SUM(column)`, etc. This means **you must validate user input** before passing it to methods that accept column names.
+
+```php
+// ⚠️ DANGEROUS - Never do this!
+$column = $_GET['column']; // User could input: "(SELECT password FROM admins)"
+$db->table('users')->select($column)->get();
+
+// ✅ SAFE - Whitelist allowed columns
+$allowedColumns = ['id', 'name', 'email', 'created_at'];
+$column = $_GET['column'];
+
+if (!in_array($column, $allowedColumns, true)) {
+    throw new InvalidArgumentException('Invalid column');
+}
+
+$db->table('users')->select($column)->get();
+```
+
+The same principle applies to `orderBy()`, `groupBy()`, and `join()` - always validate user-provided column/table names against a whitelist.
+
+### Using Aggregate Functions Safely
+
+Aggregate functions are safe when you control the SQL:
+
+```php
+// ✅ SAFE - Hardcoded aggregate, only user value is parameterized
+$minAge = $_GET['min_age'];
+
+$result = $db->table('users')
+    ->select(['role', 'COUNT(*) as total'])
+    ->where('age', '>=', $minAge)  // User input safely parameterized
+    ->groupBy('role')
+    ->get();
+```
+
 ## Requirements
 
 - PHP 8.1+
