@@ -59,6 +59,15 @@ class MySqlDriver extends AbstractDriver
 
     protected function quoteIdentifier(string $identifier): string
     {
+        // Handle schema.table or table.column format
+        if (str_contains($identifier, '.')) {
+            $parts = explode('.', $identifier);
+            return implode('.', array_map(
+                fn($part) => '`' . str_replace('`', '``', $part) . '`',
+                $parts
+            ));
+        }
+
         return '`' . str_replace('`', '``', $identifier) . '`';
     }
 

@@ -16,7 +16,6 @@ class QueryBuilder
 
     private array $columns = ['*'];
     private array $wheres = [];
-    private array $params = [];
     private array $joins = [];
     private array $orderBy = [];
     private ?int $limit = null;
@@ -95,7 +94,6 @@ class QueryBuilder
             'operator' => strtoupper($operatorOrValue),
             'value' => $value,
         ];
-        $this->params[] = $value;
 
         return $this;
     }
@@ -115,7 +113,6 @@ class QueryBuilder
             'values' => $values,
             'not' => false,
         ];
-        $this->params = array_merge($this->params, $values);
 
         return $this;
     }
@@ -135,7 +132,6 @@ class QueryBuilder
             'values' => $values,
             'not' => true,
         ];
-        $this->params = array_merge($this->params, $values);
 
         return $this;
     }
@@ -155,8 +151,6 @@ class QueryBuilder
             'values' => $values,
             'not' => false,
         ];
-        $this->params[] = $values[0];
-        $this->params[] = $values[1];
 
         return $this;
     }
@@ -176,8 +170,6 @@ class QueryBuilder
             'values' => $values,
             'not' => true,
         ];
-        $this->params[] = $values[0];
-        $this->params[] = $values[1];
 
         return $this;
     }
@@ -212,7 +204,6 @@ class QueryBuilder
             'operator' => 'LIKE',
             'value' => $pattern,
         ];
-        $this->params[] = $pattern;
 
         return $this;
     }
@@ -225,7 +216,6 @@ class QueryBuilder
             'operator' => 'NOT LIKE',
             'value' => $pattern,
         ];
-        $this->params[] = $pattern;
 
         return $this;
     }
@@ -326,7 +316,6 @@ class QueryBuilder
             'operator' => strtoupper($operator),
             'value' => $value,
         ];
-        $this->params[] = $value;
 
         return $this;
     }
@@ -494,18 +483,24 @@ class QueryBuilder
      */
     public function toSql(): array
     {
-        $sql = $this->buildSelect();
+        [$sql, $params] = $this->buildSelect();
 
-        return [$sql, $this->params];
+        return [$sql, $params];
     }
 
     // =========================================================================
     // BUILDER METHODS
     // =========================================================================
 
-    private function buildSelect(): string
+    /**
+     * Build SELECT statement and collect params in correct SQL order.
+     *
+     * @return array [sql, params]
+     */
+    private function buildSelect(): array
     {
         $sql = 'SELECT ';
+        $params = [];
 
         if ($this->distinct) {
             $sql .= 'DISTINCT ';
@@ -540,10 +535,11 @@ class QueryBuilder
             );
         }
 
-        // WHERE
+        // WHERE - params collected in SQL order
         if (!empty($this->wheres)) {
-            [$whereSql] = $this->buildWhere();
+            [$whereSql, $whereParams] = $this->buildWhere();
             $sql .= ' WHERE ' . $whereSql;
+            $params = array_merge($params, $whereParams);
         }
 
         // GROUP BY
@@ -552,13 +548,11 @@ class QueryBuilder
             $sql .= ' GROUP BY ' . implode(', ', $quotedGroupBy);
         }
 
-        // HAVING
+        // HAVING - params collected AFTER where params (SQL order)
         if (!empty($this->having)) {
-            $havingClauses = [];
-            foreach ($this->having as $h) {
-                $havingClauses[] = $this->quoteIdentifier($h['column']) . ' ' . $h['operator'] . ' ?';
-            }
-            $sql .= ' HAVING ' . implode(' AND ', $havingClauses);
+            [$havingSql, $havingParams] = $this->buildHaving();
+            $sql .= ' HAVING ' . $havingSql;
+            $params = array_merge($params, $havingParams);
         }
 
         // ORDER BY
@@ -580,13 +574,13 @@ class QueryBuilder
             $sql .= ' OFFSET ' . (int)$this->offset;
         }
 
-        return $sql;
+        return [$sql, $params];
     }
 
     /**
-     * Build WHERE clause (without params, they're already in $this->params).
+     * Build WHERE clause and extract params.
      *
-     * @return array [sql, params for this where only]
+     * @return array [sql, params]
      */
     private function buildWhere(): array
     {
@@ -619,6 +613,28 @@ class QueryBuilder
                     $clauses[] = $this->quoteIdentifier($where['column']) . ' ' . $operator;
                     break;
             }
+        }
+
+        return [implode(' AND ', $clauses), $params];
+    }
+
+    /**
+     * Build HAVING clause and extract params.
+     *
+     * @return array [sql, params]
+     */
+    private function buildHaving(): array
+    {
+        $clauses = [];
+        $params = [];
+
+        foreach ($this->having as $h) {
+            // Don't quote aggregate functions (they contain parentheses)
+            $column = str_contains($h['column'], '(')
+                ? $h['column']
+                : $this->quoteIdentifier($h['column']);
+            $clauses[] = $column . ' ' . $h['operator'] . ' ?';
+            $params[] = $h['value'];
         }
 
         return [implode(' AND ', $clauses), $params];

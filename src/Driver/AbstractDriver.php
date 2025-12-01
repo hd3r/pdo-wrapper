@@ -214,6 +214,13 @@ abstract class AbstractDriver implements DatabaseInterface
 
     public function findOne(string $table, array $where): ?array
     {
+        if (empty($where)) {
+            throw new QueryException(
+                message: 'Query failed',
+                debugMessage: 'findOne requires WHERE conditions. Use findAll() without WHERE to get all rows.'
+            );
+        }
+
         [$whereSql, $params] = $this->buildWhereClause($where);
 
         $sql = sprintf(
@@ -280,10 +287,20 @@ abstract class AbstractDriver implements DatabaseInterface
 
     /**
      * Quote an identifier (table/column name).
+     * Handles schema.table format (e.g., "public.users" -> "public"."users").
      * Override in driver for DB-specific quoting.
      */
     protected function quoteIdentifier(string $identifier): string
     {
+        // Handle schema.table or table.column format
+        if (str_contains($identifier, '.')) {
+            $parts = explode('.', $identifier);
+            return implode('.', array_map(
+                fn($part) => '"' . str_replace('"', '""', $part) . '"',
+                $parts
+            ));
+        }
+
         return '"' . str_replace('"', '""', $identifier) . '"';
     }
 

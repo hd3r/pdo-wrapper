@@ -78,4 +78,59 @@ class PostgresWorkflowTest extends AbstractWorkflowTest
             PRIMARY KEY (post_id, tag_id)
         )';
     }
+
+    /**
+     * Test schema-qualified table names (PostgreSQL specific).
+     * This tests that "public.users" is properly quoted as "public"."users".
+     */
+    public function testSchemaQualifiedTableName(): void
+    {
+        // PostgreSQL tables are in 'public' schema by default
+        // Test CRUD operations with schema-qualified name
+        $id = $this->db->insert('public.users', [
+            'email' => 'schema@test.com',
+            'name' => 'Schema Test',
+        ]);
+
+        $this->assertNotEmpty($id);
+
+        // findOne with schema
+        $user = $this->db->findOne('public.users', ['id' => $id]);
+        $this->assertSame('Schema Test', $user['name']);
+
+        // update with schema
+        $affected = $this->db->update('public.users', ['name' => 'Updated'], ['id' => $id]);
+        $this->assertSame(1, $affected);
+
+        // findAll with schema
+        $users = $this->db->findAll('public.users', ['id' => $id]);
+        $this->assertCount(1, $users);
+        $this->assertSame('Updated', $users[0]['name']);
+
+        // delete with schema
+        $deleted = $this->db->delete('public.users', ['id' => $id]);
+        $this->assertSame(1, $deleted);
+    }
+
+    /**
+     * Test QueryBuilder with schema-qualified table name.
+     */
+    public function testQueryBuilderWithSchemaQualifiedTable(): void
+    {
+        $id = $this->db->insert('users', [
+            'email' => 'qb-schema@test.com',
+            'name' => 'QB Schema Test',
+        ]);
+
+        // Query using schema.table
+        $result = $this->db->table('public.users')
+            ->where('id', $id)
+            ->first();
+
+        $this->assertNotNull($result);
+        $this->assertSame('QB Schema Test', $result['name']);
+
+        // Clean up
+        $this->db->delete('users', ['id' => $id]);
+    }
 }

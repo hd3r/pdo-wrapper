@@ -83,4 +83,58 @@ class MySqlWorkflowTest extends AbstractWorkflowTest
             FOREIGN KEY (tag_id) REFERENCES tags(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4';
     }
+
+    /**
+     * Test database-qualified table names (MySQL specific).
+     * This tests that "database.table" is properly quoted as `database`.`table`.
+     */
+    public function testDatabaseQualifiedTableName(): void
+    {
+        // MySQL tables can be accessed with database.table syntax
+        $id = $this->db->insert('pdo_wrapper_test.users', [
+            'email' => 'dbqualified@test.com',
+            'name' => 'DB Qualified Test',
+        ]);
+
+        $this->assertNotEmpty($id);
+
+        // findOne with database prefix
+        $user = $this->db->findOne('pdo_wrapper_test.users', ['id' => $id]);
+        $this->assertSame('DB Qualified Test', $user['name']);
+
+        // update with database prefix
+        $affected = $this->db->update('pdo_wrapper_test.users', ['name' => 'Updated'], ['id' => $id]);
+        $this->assertSame(1, $affected);
+
+        // findAll with database prefix
+        $users = $this->db->findAll('pdo_wrapper_test.users', ['id' => $id]);
+        $this->assertCount(1, $users);
+        $this->assertSame('Updated', $users[0]['name']);
+
+        // delete with database prefix
+        $deleted = $this->db->delete('pdo_wrapper_test.users', ['id' => $id]);
+        $this->assertSame(1, $deleted);
+    }
+
+    /**
+     * Test QueryBuilder with database-qualified table name.
+     */
+    public function testQueryBuilderWithDatabaseQualifiedTable(): void
+    {
+        $id = $this->db->insert('users', [
+            'email' => 'qb-dbqualified@test.com',
+            'name' => 'QB DB Qualified Test',
+        ]);
+
+        // Query using database.table
+        $result = $this->db->table('pdo_wrapper_test.users')
+            ->where('id', $id)
+            ->first();
+
+        $this->assertNotNull($result);
+        $this->assertSame('QB DB Qualified Test', $result['name']);
+
+        // Clean up
+        $this->db->delete('users', ['id' => $id]);
+    }
 }
