@@ -19,6 +19,7 @@
         </testsuite>
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
+            <exclude>tests/Feature/Concerns</exclude>
         </testsuite>
     </testsuites>
 

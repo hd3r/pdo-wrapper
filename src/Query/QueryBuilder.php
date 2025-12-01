@@ -375,12 +375,14 @@ class QueryBuilder
 
     public function sum(string $column): float|int|null
     {
-        return $this->aggregate('SUM', $column);
+        $result = $this->aggregate('SUM', $column);
+        return $result !== null ? (float)$result : null;
     }
 
     public function avg(string $column): float|int|null
     {
-        return $this->aggregate('AVG', $column);
+        $result = $this->aggregate('AVG', $column);
+        return $result !== null ? (float)$result : null;
     }
 
     public function min(string $column): mixed
@@ -624,6 +626,11 @@ class QueryBuilder
 
     private function quoteIdentifier(string $identifier): string
     {
+        // Handle alias: "column as alias" or "table.column as alias"
+        if (preg_match('/^(.+)\s+as\s+(\w+)$/i', $identifier, $matches)) {
+            return $this->quoteIdentifier(trim($matches[1])) . ' as ' . $matches[2];
+        }
+
         // Handle table.column format
         if (str_contains($identifier, '.')) {
             $parts = explode('.', $identifier);
