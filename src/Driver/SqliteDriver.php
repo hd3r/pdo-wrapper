@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Driver;
+namespace Hd3r\PdoWrapper\Driver;
 
 use PDO;
 use PDOException;
-use PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\Exception\ConnectionException;
 
 /**
  * SQLite database driver.

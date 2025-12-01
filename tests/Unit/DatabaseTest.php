@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Unit;
+namespace Hd3r\PdoWrapper\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\Database;
-use PdoWrapper\Driver\MySqlDriver;
-use PdoWrapper\Driver\PostgresDriver;
-use PdoWrapper\Driver\SqliteDriver;
+use Hd3r\PdoWrapper\Database;
+use Hd3r\PdoWrapper\Driver\MySqlDriver;
+use Hd3r\PdoWrapper\Driver\PostgresDriver;
+use Hd3r\PdoWrapper\Driver\SqliteDriver;
 
 class DatabaseTest extends TestCase
 {

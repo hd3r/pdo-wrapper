@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Unit\Driver;
+namespace Hd3r\PdoWrapper\Tests\Unit\Driver;
 
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\Driver\PostgresDriver;
-use PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\Driver\PostgresDriver;
+use Hd3r\PdoWrapper\Exception\ConnectionException;
 
 class PostgresDriverTest extends TestCase
 {

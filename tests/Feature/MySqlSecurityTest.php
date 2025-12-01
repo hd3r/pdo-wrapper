@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Feature;
+namespace Hd3r\PdoWrapper\Tests\Feature;
 
-use PdoWrapper\Database;
-use PdoWrapper\DatabaseInterface;
-use PdoWrapper\Tests\Feature\Concerns\AbstractSecurityTest;
+use Hd3r\PdoWrapper\Database;
+use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Tests\Feature\Concerns\AbstractSecurityTest;
 
 /**
  * Security tests for MySQL driver.
@@ -62,7 +62,7 @@ class MySqlSecurityTest extends AbstractSecurityTest
     {
         $binaryData = "\xFF\xFE"; // Invalid UTF-8 sequence
 
-        $this->expectException(\PdoWrapper\Exception\QueryException::class);
+        $this->expectException(\Hd3r\PdoWrapper\Exception\QueryException::class);
         $this->db->insert('secrets', ['secret_data' => $binaryData]);
     }
 }

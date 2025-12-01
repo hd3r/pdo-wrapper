@@ -17,12 +17,12 @@
     },
     "autoload": {
         "psr-4": {
-            "PdoWrapper\\": "src/"
+            "Hd3r\\PdoWrapper\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "PdoWrapper\\Tests\\": "tests/"
+            "Hd3r\\PdoWrapper\\Tests\\": "tests/"
         }
     },
     "config": {

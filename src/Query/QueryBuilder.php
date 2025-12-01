@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Query;
+namespace Hd3r\PdoWrapper\Query;
 
 use PDO;
-use PdoWrapper\DatabaseInterface;
-use PdoWrapper\Exception\QueryException;
+use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Exception\QueryException;
 
 /**
  * Fluent query builder for constructing SQL queries.

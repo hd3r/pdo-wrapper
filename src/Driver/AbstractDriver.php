@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Driver;
+namespace Hd3r\PdoWrapper\Driver;
 
 use Closure;
 use PDO;
 use PDOException;
 use PDOStatement;
-use PdoWrapper\DatabaseInterface;
-use PdoWrapper\Exception\QueryException;
-use PdoWrapper\Exception\TransactionException;
-use PdoWrapper\Traits\HasHooks;
+use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Exception\QueryException;
+use Hd3r\PdoWrapper\Exception\TransactionException;
+use Hd3r\PdoWrapper\Traits\HasHooks;
 use Throwable;
 
 /**
@@ -477,10 +477,10 @@ abstract class AbstractDriver implements DatabaseInterface
      * Create a query builder for the given table.
      *
      * @param string $table Table name (supports schema.table format)
-     * @return \PdoWrapper\Query\QueryBuilder
+     * @return \Hd3r\PdoWrapper\Query\QueryBuilder
      */
-    public function table(string $table): \PdoWrapper\Query\QueryBuilder
+    public function table(string $table): \Hd3r\PdoWrapper\Query\QueryBuilder
     {
-        return new \PdoWrapper\Query\QueryBuilder($this, $table, $this->getQuoteChar());
+        return new \Hd3r\PdoWrapper\Query\QueryBuilder($this, $table, $this->getQuoteChar());
     }
 }

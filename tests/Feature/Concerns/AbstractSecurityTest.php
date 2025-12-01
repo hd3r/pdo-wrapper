@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Feature\Concerns;
+namespace Hd3r\PdoWrapper\Tests\Feature\Concerns;
 
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\DatabaseInterface;
 
 /**
  * Abstract base class for security tests.
@@ -127,7 +127,7 @@ abstract class AbstractSecurityTest extends TestCase
             // MySQL casts strings to int (returns 0 or the numeric prefix)
             // Should NOT return all users
             $this->assertLessThan(2, count($result));
-        } catch (\PdoWrapper\Exception\QueryException $e) {
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
             // PostgreSQL throws error on invalid integer - this is GOOD security behavior
             // Check the original PDO exception message
             $originalMessage = $e->getPrevious()?->getMessage() ?? '';
@@ -144,7 +144,7 @@ abstract class AbstractSecurityTest extends TestCase
             $result = $this->db->table('users')
                 ->whereBetween('id', [$maliciousStart, $maliciousEnd])
                 ->get();
-        } catch (\PdoWrapper\Exception\QueryException $e) {
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
             // PostgreSQL throws error on invalid integer - this is GOOD security behavior
             $originalMessage = $e->getPrevious()?->getMessage() ?? '';
             $this->assertStringContainsString('invalid input syntax', $originalMessage);
@@ -185,7 +185,7 @@ abstract class AbstractSecurityTest extends TestCase
             // MySQL casts "1 OR 1=1" to int 1, may return 1 row (id=1)
             // Should NOT return all users
             $this->assertLessThan(2, count($result));
-        } catch (\PdoWrapper\Exception\QueryException $e) {
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
             // PostgreSQL throws error on invalid integer - this is GOOD security behavior
             $originalMessage = $e->getPrevious()?->getMessage() ?? '';
             $this->assertStringContainsString('invalid input syntax', $originalMessage);

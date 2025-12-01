@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper;
+namespace Hd3r\PdoWrapper;
 
 use Closure;
 use PDO;

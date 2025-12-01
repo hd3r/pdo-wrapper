@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Traits;
+namespace Hd3r\PdoWrapper\Traits;
 
 use Closure;
 

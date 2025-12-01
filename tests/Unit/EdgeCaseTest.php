@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Unit;
+namespace Hd3r\PdoWrapper\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\Database;
-use PdoWrapper\Exception\QueryException;
+use Hd3r\PdoWrapper\Database;
+use Hd3r\PdoWrapper\Exception\QueryException;
 
 /**
  * Edge case tests for bugs found by code review.

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper;
+namespace Hd3r\PdoWrapper;
 
-use PdoWrapper\Driver\MySqlDriver;
-use PdoWrapper\Driver\PostgresDriver;
-use PdoWrapper\Driver\SqliteDriver;
+use Hd3r\PdoWrapper\Driver\MySqlDriver;
+use Hd3r\PdoWrapper\Driver\PostgresDriver;
+use Hd3r\PdoWrapper\Driver\SqliteDriver;
 
 /**
  * Factory class for creating database connections.

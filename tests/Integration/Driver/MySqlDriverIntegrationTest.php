@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Integration\Driver;
+namespace Hd3r\PdoWrapper\Tests\Integration\Driver;
 
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\DatabaseInterface;
-use PdoWrapper\Driver\MySqlDriver;
-use PdoWrapper\Exception\ConnectionException;
-use PdoWrapper\Exception\TransactionException;
+use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Driver\MySqlDriver;
+use Hd3r\PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\Exception\TransactionException;
 
 class MySqlDriverIntegrationTest extends TestCase
 {

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Feature\Concerns;
+namespace Hd3r\PdoWrapper\Tests\Feature\Concerns;
 
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\DatabaseInterface;
-use PdoWrapper\Exception\QueryException;
+use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Exception\QueryException;
 
 /**
  * Abstract base class for workflow tests.

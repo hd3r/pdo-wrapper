@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Unit\Driver;
+namespace Hd3r\PdoWrapper\Tests\Unit\Driver;
 
 use PDO;
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\Driver\MySqlDriver;
-use PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\Driver\MySqlDriver;
+use Hd3r\PdoWrapper\Exception\ConnectionException;
 
 class MySqlDriverTest extends TestCase
 {

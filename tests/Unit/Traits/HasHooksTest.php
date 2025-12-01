@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Unit\Traits;
+namespace Hd3r\PdoWrapper\Tests\Unit\Traits;
 
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\Traits\HasHooks;
+use Hd3r\PdoWrapper\Traits\HasHooks;
 
 class HasHooksTest extends TestCase
 {

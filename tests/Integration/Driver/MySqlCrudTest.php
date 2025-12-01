@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Integration\Driver;
+namespace Hd3r\PdoWrapper\Tests\Integration\Driver;
 
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\Database;
-use PdoWrapper\Driver\MySqlDriver;
+use Hd3r\PdoWrapper\Database;
+use Hd3r\PdoWrapper\Driver\MySqlDriver;
 
 class MySqlCrudTest extends TestCase
 {

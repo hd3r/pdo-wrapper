@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Integration\Driver;
+namespace Hd3r\PdoWrapper\Tests\Integration\Driver;
 
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\DatabaseInterface;
-use PdoWrapper\Driver\SqliteDriver;
-use PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Driver\SqliteDriver;
+use Hd3r\PdoWrapper\Exception\ConnectionException;
 
 class SqliteDriverIntegrationTest extends TestCase
 {

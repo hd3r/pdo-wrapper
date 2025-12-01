@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace PdoWrapper\Tests\Integration;
+namespace Hd3r\PdoWrapper\Tests\Integration;
 
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
-use PdoWrapper\Database;
-use PdoWrapper\DatabaseInterface;
-use PdoWrapper\Exception\QueryException;
+use Hd3r\PdoWrapper\Database;
+use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Exception\QueryException;
 
 class WrapperTest extends TestCase
 {
