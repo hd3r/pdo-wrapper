@@ -65,13 +65,12 @@ class QueryBuilder
      * - select('id, name')
      * - select(['id', 'name'])
      * - select(['users.id', 'users.name as username'])
-     * - select(['COUNT(*) as total']) - aggregates with parentheses are allowed
+     * - select([Database::raw('COUNT(*) as total')]) - for aggregates
      *
-     * SECURITY NOTE: Expressions containing parentheses are passed through unquoted
-     * to support aggregate functions. Never pass untrusted user input directly to
-     * this method. Always validate/whitelist column names in your application.
+     * For aggregate functions or raw SQL expressions, use Database::raw():
+     * - select([Database::raw('COUNT(*)'), Database::raw('AVG(price)')])
      *
-     * @param string|array $columns Column(s) to select
+     * @param string|array<string|RawExpression> $columns Column(s) to select
      * @return self
      */
     public function select(string|array $columns = '*'): self
@@ -477,12 +476,12 @@ class QueryBuilder
      *
      * Used with GROUP BY for aggregate conditions.
      *
-     * @param string $column Column or aggregate function (e.g., 'COUNT(*)')
+     * @param string|RawExpression $column Column or aggregate function (use Database::raw() for aggregates)
      * @param string $operator Comparison operator
      * @param mixed $value Value to compare
      * @return self
      */
-    public function having(string $column, string $operator, mixed $value): self
+    public function having(string|RawExpression $column, string $operator, mixed $value): self
     {
         $this->having[] = [
             'column' => $column,
@@ -604,9 +603,9 @@ class QueryBuilder
         $originalColumns = $this->columns;
 
         if ($column === '*') {
-            $this->columns = ["{$function}(*) as aggregate"];
+            $this->columns = [new RawExpression("{$function}(*) as aggregate")];
         } else {
-            $this->columns = ["{$function}({$this->quoteIdentifier($column)}) as aggregate"];
+            $this->columns = [new RawExpression("{$function}({$this->quoteIdentifier($column)}) as aggregate")];
         }
 
         [$sql, $params] = $this->toSql();
@@ -746,9 +745,13 @@ class QueryBuilder
             $sql .= '*';
         } else {
             $quotedColumns = array_map(function ($col) {
-                // Don't quote aggregate functions or *
-                if (str_contains($col, '(') || $col === '*') {
-                    return $col;
+                // RawExpression bypasses quoting (for aggregates, etc.)
+                if ($col instanceof RawExpression) {
+                    return (string) $col;
+                }
+                // Wildcard doesn't need quoting
+                if ($col === '*') {
+                    return '*';
                 }
                 return $this->quoteIdentifier($col);
             }, $this->columns);
@@ -866,9 +869,9 @@ class QueryBuilder
         $params = [];
 
         foreach ($this->having as $h) {
-            // Don't quote aggregate functions (they contain parentheses)
-            $column = str_contains($h['column'], '(')
-                ? $h['column']
+            // RawExpression bypasses quoting (for aggregates)
+            $column = $h['column'] instanceof RawExpression
+                ? (string) $h['column']
                 : $this->quoteIdentifier($h['column']);
             $clauses[] = $column . ' ' . $h['operator'] . ' ?';
             $params[] = $h['value'];

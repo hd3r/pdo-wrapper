@@ -7,6 +7,7 @@ namespace Hd3r\PdoWrapper;
 use Hd3r\PdoWrapper\Driver\MySqlDriver;
 use Hd3r\PdoWrapper\Driver\PostgresDriver;
 use Hd3r\PdoWrapper\Driver\SqliteDriver;
+use Hd3r\PdoWrapper\Query\RawExpression;
 
 /**
  * Factory class for creating database connections.
@@ -52,5 +53,26 @@ class Database
     public static function sqlite(?string $path = null): SqliteDriver
     {
         return new SqliteDriver($path);
+    }
+
+    /**
+     * Create a raw SQL expression that will not be quoted.
+     *
+     * Use this for aggregate functions, complex expressions, or any SQL
+     * that should be passed through without identifier quoting.
+     *
+     * SECURITY WARNING: Never pass untrusted user input to this method.
+     * This bypasses SQL injection protection for identifiers.
+     *
+     * @param string $value The raw SQL string
+     * @return RawExpression
+     *
+     * @example
+     * $db->table('users')->select([Database::raw('COUNT(*) as total')])->get();
+     * $db->table('orders')->select([Database::raw('SUM(amount) as revenue')])->get();
+     */
+    public static function raw(string $value): RawExpression
+    {
+        return new RawExpression($value);
     }
 }

@@ -464,9 +464,9 @@ abstract class AbstractWorkflowTest extends TestCase
         // The QueryBuilder must build params in SQL order (WHERE first, then HAVING)
         // regardless of the order methods are called
         [$sql, $params] = $this->db->table('posts')
-            ->select(['user_id', 'COUNT(*) as cnt'])
+            ->select(['user_id', \Hd3r\PdoWrapper\Database::raw('COUNT(*) as cnt')])
             ->groupBy('user_id')
-            ->having('COUNT(*)', '>=', 2)       // Called first, but param should be second
+            ->having(\Hd3r\PdoWrapper\Database::raw('COUNT(*)'), '>=', 2)       // Called first, but param should be second
             ->where('status', 'published')      // Called second, but param should be first
             ->toSql();
 

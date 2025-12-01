@@ -377,26 +377,50 @@ abstract class AbstractSecurityTest extends TestCase
     }
 
     /**
-     * NOTE: The query builder intentionally allows expressions with parentheses
-     * to support aggregate functions like COUNT(*), SUM(column), etc.
-     * This means subqueries in select() are NOT prevented by design.
-     *
-     * SECURITY: Never pass untrusted user input directly to select().
-     * Always validate/whitelist column names in your application layer.
-     *
-     * This test documents the current behavior - it's a known limitation,
-     * not a bug. For user-facing column selection, always use a whitelist.
+     * Test that Database::raw() allows aggregate functions.
+     * Raw expressions bypass identifier quoting intentionally.
      */
-    public function testSelectAllowsExpressionsWithParentheses(): void
+    public function testRawExpressionAllowsAggregates(): void
     {
-        // This documents that expressions with () are allowed (for aggregates)
-        // Application code should whitelist allowed columns for user input!
         $result = $this->db->table('users')
-            ->select(['COUNT(*) as total'])
+            ->select([\Hd3r\PdoWrapper\Database::raw('COUNT(*) as total')])
             ->get();
 
         $this->assertNotEmpty($result);
         $this->assertArrayHasKey('total', $result[0]);
+    }
+
+    /**
+     * Test that parentheses in regular strings are now safely quoted.
+     * This prevents SQL injection via subqueries.
+     */
+    public function testParenthesesInStringsAreQuoted(): void
+    {
+        $maliciousInput = '(SELECT secret_data FROM secrets)';
+
+        try {
+            $result = $this->db->table('users')
+                ->select(['name', $maliciousInput])
+                ->get();
+
+            // If we get here, the column was quoted and treated as literal
+            // No secret data should be leaked
+            if (!empty($result)) {
+                foreach ($result as $row) {
+                    foreach ($row as $value) {
+                        $this->assertStringNotContainsString(
+                            'TOP SECRET DATA',
+                            (string) $value,
+                            'Secret data should not be leaked'
+                        );
+                    }
+                }
+            }
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+            // Column not found error is expected - the subquery was quoted
+            // This is the secure behavior
+            $this->assertTrue(true);
+        }
     }
 
     // =========================================================================
@@ -451,6 +475,58 @@ abstract class AbstractSecurityTest extends TestCase
             } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
                 $this->assertStringContainsString('Invalid operator', $e->getDebugMessage());
             }
+        }
+    }
+
+    // =========================================================================
+    // MASS UPDATE/DELETE PROTECTION
+    // =========================================================================
+
+    public function testUpdateWithoutWhereThrowsException(): void
+    {
+        try {
+            $this->db->table('users')->update(['role' => 'admin']);
+            $this->fail('Update without WHERE should throw exception');
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+            $this->assertStringContainsString('safety check', $e->getDebugMessage());
+        }
+
+        // All users should still have original roles
+        $admin = $this->db->table('users')->where('name', 'Admin')->first();
+        $this->assertSame('admin', $admin['role']);
+    }
+
+    public function testDeleteWithoutWhereThrowsException(): void
+    {
+        try {
+            $this->db->table('users')->delete();
+            $this->fail('Delete without WHERE should throw exception');
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+            $this->assertStringContainsString('safety check', $e->getDebugMessage());
+        }
+
+        // All users should still exist
+        $users = $this->db->table('users')->get();
+        $this->assertCount(2, $users);
+    }
+
+    public function testDirectUpdateWithEmptyWhereThrowsException(): void
+    {
+        try {
+            $this->db->update('users', ['role' => 'admin'], []);
+            $this->fail('Direct update with empty WHERE should throw exception');
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+            $this->assertStringContainsString('safety check', $e->getDebugMessage());
+        }
+    }
+
+    public function testDirectDeleteWithEmptyWhereThrowsException(): void
+    {
+        try {
+            $this->db->delete('users', []);
+            $this->fail('Direct delete with empty WHERE should throw exception');
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+            $this->assertStringContainsString('safety check', $e->getDebugMessage());
         }
     }
 }

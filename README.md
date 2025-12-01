@@ -279,10 +279,12 @@ $users = $db->table('users')
 ### Group By, Having
 
 ```php
+use Hd3r\PdoWrapper\Database;
+
 $stats = $db->table('posts')
-    ->select(['user_id', 'COUNT(*) as post_count'])
+    ->select(['user_id', Database::raw('COUNT(*) as post_count')])
     ->groupBy('user_id')
-    ->having('COUNT(*)', '>', 5)
+    ->having(Database::raw('COUNT(*)'), '>', 5)
     ->get();
 ```
 
@@ -433,18 +435,34 @@ $db->table('mydb.users')->where('id', 1)->first();
 This library protects against SQL injection through:
 
 - **Prepared statements** for all values (WHERE, INSERT, UPDATE)
-- **Identifier quoting** for column and table names
+- **Identifier quoting** for all column and table names
 - **Operator whitelist** validation (only `=`, `!=`, `<>`, `<`, `>`, `<=`, `>=`, `LIKE`, `NOT LIKE`, `IS`, `IS NOT`)
 
-### Important: User Input in Column Names
+### Raw Expressions
 
-The `select()` method allows expressions with parentheses to support aggregate functions like `COUNT(*)`, `SUM(column)`, etc. This means **you must validate user input** before passing it to methods that accept column names.
+For aggregate functions or complex SQL expressions, use `Database::raw()`:
 
 ```php
-// ⚠️ DANGEROUS - Never do this!
-$column = $_GET['column']; // User could input: "(SELECT password FROM admins)"
-$db->table('users')->select($column)->get();
+use Hd3r\PdoWrapper\Database;
 
+// Aggregates require Database::raw()
+$db->table('users')
+    ->select([Database::raw('COUNT(*) as total')])
+    ->get();
+
+// Regular column names are automatically quoted and safe
+$db->table('users')
+    ->select(['id', 'name', 'email'])  // Becomes: "id", "name", "email"
+    ->get();
+```
+
+**Security Note:** Never pass user input to `Database::raw()`. Raw expressions bypass all identifier quoting.
+
+### User Input in Column Names
+
+Always validate user input before using it as column names:
+
+```php
 // ✅ SAFE - Whitelist allowed columns
 $allowedColumns = ['id', 'name', 'email', 'created_at'];
 $column = $_GET['column'];
@@ -453,25 +471,10 @@ if (!in_array($column, $allowedColumns, true)) {
     throw new InvalidArgumentException('Invalid column');
 }
 
-$db->table('users')->select($column)->get();
+$db->table('users')->orderBy($column)->get();
 ```
 
-The same principle applies to `orderBy()`, `groupBy()`, and `join()` - always validate user-provided column/table names against a whitelist.
-
-### Using Aggregate Functions Safely
-
-Aggregate functions are safe when you control the SQL:
-
-```php
-// ✅ SAFE - Hardcoded aggregate, only user value is parameterized
-$minAge = $_GET['min_age'];
-
-$result = $db->table('users')
-    ->select(['role', 'COUNT(*) as total'])
-    ->where('age', '>=', $minAge)  // User input safely parameterized
-    ->groupBy('role')
-    ->get();
-```
+The same principle applies to `select()`, `orderBy()`, `groupBy()`, and `join()`.
 
 ## Requirements
 

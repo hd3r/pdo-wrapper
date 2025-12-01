@@ -110,9 +110,9 @@ class EdgeCaseTest extends TestCase
 
         // Build query with having() called before where()
         [$sql, $params] = $db->table('posts')
-            ->select(['user_id', 'COUNT(*) as cnt'])
+            ->select(['user_id', Database::raw('COUNT(*) as cnt')])
             ->groupBy('user_id')
-            ->having('COUNT(*)', '>=', 5)       // Called first, value=5
+            ->having(Database::raw('COUNT(*)'), '>=', 5)       // Called first, value=5
             ->where('status', 'published')      // Called second, value='published'
             ->toSql();
 
@@ -132,12 +132,12 @@ class EdgeCaseTest extends TestCase
 
         // Complex query with multiple conditions
         [$sql, $params] = $db->table('posts')
-            ->select(['user_id', 'COUNT(*) as cnt', 'SUM(views) as total_views'])
-            ->having('COUNT(*)', '>', 3)          // Having condition 1
+            ->select(['user_id', Database::raw('COUNT(*) as cnt'), Database::raw('SUM(views) as total_views')])
+            ->having(Database::raw('COUNT(*)'), '>', 3)          // Having condition 1
             ->where('status', 'published')        // Where condition 1
             ->where('type', 'article')            // Where condition 2
             ->groupBy('user_id')
-            ->having('SUM(views)', '>=', 100)     // Having condition 2
+            ->having(Database::raw('SUM(views)'), '>=', 100)     // Having condition 2
             ->toSql();
 
         // Params should be: WHERE1, WHERE2, HAVING1, HAVING2
@@ -150,6 +150,20 @@ class EdgeCaseTest extends TestCase
     // =========================================================================
     // ADDITIONAL EDGE CASES
     // =========================================================================
+
+    public function testSelectWithWildcardInArray(): void
+    {
+        $db = Database::sqlite(':memory:');
+
+        // Test that wildcard in array is not quoted
+        [$sql, ] = $db->table('users')
+            ->select(['id', '*'])
+            ->toSql();
+
+        // Wildcard should not be quoted as "*"
+        $this->assertStringContainsString('"id", *', $sql);
+        $this->assertStringNotContainsString('"*"', $sql);
+    }
 
     public function testQuoteIdentifierWithSpecialCharacters(): void
     {
