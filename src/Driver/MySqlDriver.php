@@ -56,4 +56,9 @@ class MySqlDriver extends AbstractDriver
             );
         }
     }
+
+    protected function quoteIdentifier(string $identifier): string
+    {
+        return '`' . str_replace('`', '``', $identifier) . '`';
+    }
 }

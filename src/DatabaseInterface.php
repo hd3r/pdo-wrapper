@@ -80,4 +80,70 @@ interface DatabaseInterface
      * @param Closure $callback Callback receiving event data array
      */
     public function on(string $event, Closure $callback): void;
+
+    // =========================================================================
+    // CRUD Helper
+    // =========================================================================
+
+    /**
+     * Insert a row and return the last insert ID.
+     *
+     * @param string $table Table name
+     * @param array $data Column => value pairs
+     * @return int|string Last insert ID
+     * @throws Exception\QueryException
+     */
+    public function insert(string $table, array $data): int|string;
+
+    /**
+     * Update rows matching WHERE conditions.
+     *
+     * @param string $table Table name
+     * @param array $data Column => value pairs to update
+     * @param array $where WHERE conditions (column => value)
+     * @return int Number of affected rows
+     * @throws Exception\QueryException When $where is empty (safety)
+     */
+    public function update(string $table, array $data, array $where): int;
+
+    /**
+     * Delete rows matching WHERE conditions.
+     *
+     * @param string $table Table name
+     * @param array $where WHERE conditions (column => value)
+     * @return int Number of affected rows
+     * @throws Exception\QueryException When $where is empty (safety)
+     */
+    public function delete(string $table, array $where): int;
+
+    /**
+     * Find a single row by WHERE conditions.
+     *
+     * @param string $table Table name
+     * @param array $where WHERE conditions (column => value)
+     * @return array|null Row as associative array or null
+     * @throws Exception\QueryException
+     */
+    public function findOne(string $table, array $where): ?array;
+
+    /**
+     * Find all rows matching WHERE conditions.
+     *
+     * @param string $table Table name
+     * @param array $where WHERE conditions (optional)
+     * @return array Array of rows
+     * @throws Exception\QueryException
+     */
+    public function findAll(string $table, array $where = []): array;
+
+    /**
+     * Update multiple rows by their key column.
+     *
+     * @param string $table Table name
+     * @param array $rows Array of rows with key column
+     * @param string $keyColumn Column to match rows (default: 'id')
+     * @return int Number of affected rows
+     * @throws Exception\QueryException
+     */
+    public function updateMultiple(string $table, array $rows, string $keyColumn = 'id'): int;
 }
