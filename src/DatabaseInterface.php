@@ -146,4 +146,16 @@ interface DatabaseInterface
      * @throws Exception\QueryException
      */
     public function updateMultiple(string $table, array $rows, string $keyColumn = 'id'): int;
+
+    // =========================================================================
+    // Query Builder
+    // =========================================================================
+
+    /**
+     * Create a query builder for the given table.
+     *
+     * @param string $table Table name
+     * @return Query\QueryBuilder
+     */
+    public function table(string $table): Query\QueryBuilder;
 }

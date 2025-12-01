@@ -61,4 +61,9 @@ class MySqlDriver extends AbstractDriver
     {
         return '`' . str_replace('`', '``', $identifier) . '`';
     }
+
+    protected function getQuoteChar(): string
+    {
+        return '`';
+    }
 }

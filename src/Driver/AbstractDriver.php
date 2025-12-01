@@ -305,4 +305,22 @@ abstract class AbstractDriver implements DatabaseInterface
 
         return [implode(' AND ', $clauses), $params];
     }
+
+    /**
+     * Get the quote character for identifiers.
+     * Override in driver for DB-specific quoting.
+     */
+    protected function getQuoteChar(): string
+    {
+        return '"';
+    }
+
+    // =========================================================================
+    // Query Builder
+    // =========================================================================
+
+    public function table(string $table): \PdoWrapper\Query\QueryBuilder
+    {
+        return new \PdoWrapper\Query\QueryBuilder($this, $table, $this->getQuoteChar());
+    }
 }
