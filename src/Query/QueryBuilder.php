@@ -16,6 +16,15 @@ use Hd3r\PdoWrapper\Exception\QueryException;
  */
 class QueryBuilder
 {
+    /**
+     * Allowed comparison operators (whitelist for security).
+     */
+    private const ALLOWED_OPERATORS = [
+        '=', '!=', '<>', '<', '>', '<=', '>=',
+        'LIKE', 'NOT LIKE',
+        'IS', 'IS NOT',
+    ];
+
     private DatabaseInterface $db;
     private string $table;
     private string $quoteChar;
@@ -56,6 +65,11 @@ class QueryBuilder
      * - select('id, name')
      * - select(['id', 'name'])
      * - select(['users.id', 'users.name as username'])
+     * - select(['COUNT(*) as total']) - aggregates with parentheses are allowed
+     *
+     * SECURITY NOTE: Expressions containing parentheses are passed through unquoted
+     * to support aggregate functions. Never pass untrusted user input directly to
+     * this method. Always validate/whitelist column names in your application.
      *
      * @param string|array $columns Column(s) to select
      * @return self
@@ -101,6 +115,7 @@ class QueryBuilder
      * @param mixed $operatorOrValue Operator or value (if 2 args)
      * @param mixed $value Value (if 3 args)
      * @return self
+     * @throws QueryException When called with only column name (missing value)
      */
     public function where(string|array $column, mixed $operatorOrValue = null, mixed $value = null): self
     {
@@ -112,8 +127,16 @@ class QueryBuilder
             return $this;
         }
 
+        // Must have at least 2 arguments for string column
+        if ($operatorOrValue === null) {
+            throw new QueryException(
+                message: 'Query failed',
+                debugMessage: 'where() requires at least 2 arguments: where(column, value) or where(column, operator, value)'
+            );
+        }
+
         // Two params: where('id', 5) → equals
-        if ($value === null && $operatorOrValue !== null) {
+        if ($value === null) {
             $value = $operatorOrValue;
             $operatorOrValue = '=';
         }
@@ -121,7 +144,7 @@ class QueryBuilder
         $this->wheres[] = [
             'type' => 'basic',
             'column' => $column,
-            'operator' => strtoupper($operatorOrValue),
+            'operator' => $this->validateOperator($operatorOrValue),
             'value' => $value,
         ];
 
@@ -327,7 +350,7 @@ class QueryBuilder
             'type' => 'INNER',
             'table' => $table,
             'first' => $first,
-            'operator' => $operator,
+            'operator' => $this->validateOperator($operator),
             'second' => $second,
         ];
 
@@ -349,7 +372,7 @@ class QueryBuilder
             'type' => 'LEFT',
             'table' => $table,
             'first' => $first,
-            'operator' => $operator,
+            'operator' => $this->validateOperator($operator),
             'second' => $second,
         ];
 
@@ -371,7 +394,7 @@ class QueryBuilder
             'type' => 'RIGHT',
             'table' => $table,
             'first' => $first,
-            'operator' => $operator,
+            'operator' => $this->validateOperator($operator),
             'second' => $second,
         ];
 
@@ -463,7 +486,7 @@ class QueryBuilder
     {
         $this->having[] = [
             'column' => $column,
-            'operator' => strtoupper($operator),
+            'operator' => $this->validateOperator($operator),
             'value' => $value,
         ];
 
@@ -625,7 +648,7 @@ class QueryBuilder
         if (empty($this->wheres)) {
             throw new QueryException(
                 message: 'Update failed',
-                debugMessage: 'Cannot update without WHERE conditions (safety check). Use updateAll() to update all rows.'
+                debugMessage: 'Cannot update without WHERE conditions (safety check). Use raw execute() if you really want to update all rows.'
             );
         }
 
@@ -664,7 +687,7 @@ class QueryBuilder
         if (empty($this->wheres)) {
             throw new QueryException(
                 message: 'Delete failed',
-                debugMessage: 'Cannot delete without WHERE conditions (safety check). Use deleteAll() to delete all rows.'
+                debugMessage: 'Cannot delete without WHERE conditions (safety check). Use raw execute() if you really want to delete all rows.'
             );
         }
 
@@ -862,6 +885,8 @@ class QueryBuilder
      * - Dotted: "table.column" → "table"."column"
      * - Alias: "column as alias" → "column" as alias
      *
+     * Escapes the quote character within identifiers to prevent SQL injection.
+     *
      * @param string $identifier Identifier to quote
      * @return string Quoted identifier
      */
@@ -872,12 +897,43 @@ class QueryBuilder
             return $this->quoteIdentifier(trim($matches[1])) . ' as ' . $matches[2];
         }
 
+        // Escape character: double the quote char (standard SQL escaping)
+        $escape = $this->quoteChar . $this->quoteChar;
+
         // Handle table.column format
         if (str_contains($identifier, '.')) {
             $parts = explode('.', $identifier);
-            return implode('.', array_map(fn($p) => $this->quoteChar . $p . $this->quoteChar, $parts));
+            return implode('.', array_map(
+                fn($p) => $this->quoteChar . str_replace($this->quoteChar, $escape, $p) . $this->quoteChar,
+                $parts
+            ));
         }
 
-        return $this->quoteChar . $identifier . $this->quoteChar;
+        return $this->quoteChar . str_replace($this->quoteChar, $escape, $identifier) . $this->quoteChar;
+    }
+
+    /**
+     * Validate that an operator is in the allowed whitelist.
+     *
+     * @param string $operator Operator to validate
+     * @return string Validated and normalized operator
+     * @throws QueryException When operator is not allowed
+     */
+    private function validateOperator(string $operator): string
+    {
+        $normalized = strtoupper(trim($operator));
+
+        if (!in_array($normalized, self::ALLOWED_OPERATORS, true)) {
+            throw new QueryException(
+                message: 'Query failed',
+                debugMessage: sprintf(
+                    'Invalid operator "%s". Allowed: %s',
+                    $operator,
+                    implode(', ', self::ALLOWED_OPERATORS)
+                )
+            );
+        }
+
+        return $normalized;
     }
 }

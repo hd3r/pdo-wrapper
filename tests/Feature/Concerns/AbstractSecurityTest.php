@@ -288,4 +288,169 @@ abstract class AbstractSecurityTest extends TestCase
         $user = $this->db->table('users')->where('name', 'NullTest')->first();
         $this->assertNull($user['role']);
     }
+
+    // =========================================================================
+    // SQL INJECTION VIA IDENTIFIERS (Column/Table Names)
+    // =========================================================================
+
+    public function testSqlInjectionInColumnName(): void
+    {
+        $maliciousColumn = '"; DROP TABLE users; --';
+
+        try {
+            $this->db->table('users')
+                ->where($maliciousColumn, 'test')
+                ->get();
+
+            // SQLite may not throw for non-existent quoted column
+            // But injection should still be prevented
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+            // MySQL/PostgreSQL throw "column not found" - this is GOOD security behavior
+            // The malicious string was safely quoted, not executed
+        }
+
+        // Critical: Table should still exist with all data
+        $users = $this->db->table('users')->get();
+        $this->assertCount(2, $users);
+    }
+
+    public function testSqlInjectionInTableName(): void
+    {
+        $maliciousTable = 'users"; DROP TABLE secrets; --';
+
+        try {
+            $result = $this->db->table($maliciousTable)->get();
+            // Should fail (table doesn't exist with that weird name)
+            $this->fail('Expected exception for non-existent table');
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+            // Expected - table doesn't exist
+        }
+
+        // Secrets table should still exist
+        $secrets = $this->db->table('secrets')->get();
+        $this->assertCount(1, $secrets);
+    }
+
+    public function testSqlInjectionInOperator(): void
+    {
+        $maliciousOperator = '; DROP TABLE users; --';
+
+        $this->expectException(\Hd3r\PdoWrapper\Exception\QueryException::class);
+
+        // Should throw exception due to invalid operator (whitelist validation)
+        $this->db->table('users')
+            ->where('id', $maliciousOperator, 1)
+            ->get();
+    }
+
+    public function testSqlInjectionInJoinOperator(): void
+    {
+        $maliciousOperator = '; DROP TABLE secrets; --';
+
+        $this->expectException(\Hd3r\PdoWrapper\Exception\QueryException::class);
+
+        // Should throw exception due to invalid operator
+        $this->db->table('users')
+            ->join('secrets', 'users.id', $maliciousOperator, 'secrets.id')
+            ->get();
+    }
+
+    public function testSqlInjectionInOrderByColumn(): void
+    {
+        $maliciousColumn = 'name; DROP TABLE users; --';
+
+        try {
+            $this->db->table('users')
+                ->orderBy($maliciousColumn)
+                ->get();
+
+            // SQLite may not throw for non-existent quoted column
+            // But injection should still be prevented
+        } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+            // MySQL/PostgreSQL throw "column not found" - this is GOOD security behavior
+            // The malicious string was safely quoted, not executed
+        }
+
+        // Critical: Table should still exist with all data
+        $users = $this->db->table('users')->get();
+        $this->assertCount(2, $users);
+    }
+
+    /**
+     * NOTE: The query builder intentionally allows expressions with parentheses
+     * to support aggregate functions like COUNT(*), SUM(column), etc.
+     * This means subqueries in select() are NOT prevented by design.
+     *
+     * SECURITY: Never pass untrusted user input directly to select().
+     * Always validate/whitelist column names in your application layer.
+     *
+     * This test documents the current behavior - it's a known limitation,
+     * not a bug. For user-facing column selection, always use a whitelist.
+     */
+    public function testSelectAllowsExpressionsWithParentheses(): void
+    {
+        // This documents that expressions with () are allowed (for aggregates)
+        // Application code should whitelist allowed columns for user input!
+        $result = $this->db->table('users')
+            ->select(['COUNT(*) as total'])
+            ->get();
+
+        $this->assertNotEmpty($result);
+        $this->assertArrayHasKey('total', $result[0]);
+    }
+
+    // =========================================================================
+    // EDGE CASES & VALIDATION
+    // =========================================================================
+
+    public function testWhereWithOneArgumentThrowsException(): void
+    {
+        $this->expectException(\Hd3r\PdoWrapper\Exception\QueryException::class);
+
+        // Should throw because where() requires at least 2 arguments
+        $this->db->table('users')->where('id')->get();
+    }
+
+    public function testValidOperatorsWork(): void
+    {
+        // Test comparison operators on integer column
+        $comparisonOperators = ['=', '!=', '<>', '<', '>', '<=', '>='];
+
+        foreach ($comparisonOperators as $operator) {
+            // Should not throw
+            $result = $this->db->table('users')
+                ->where('id', $operator, 1)
+                ->get();
+
+            $this->assertIsArray($result);
+        }
+
+        // Test LIKE operators on string column (PostgreSQL doesn't support LIKE on integers)
+        $likeOperators = ['LIKE', 'NOT LIKE'];
+
+        foreach ($likeOperators as $operator) {
+            $result = $this->db->table('users')
+                ->where('name', $operator, '%Admin%')
+                ->get();
+
+            $this->assertIsArray($result);
+        }
+    }
+
+    public function testInvalidOperatorThrowsException(): void
+    {
+        $invalidOperators = ['INVALID', 'DROP', '--', '/*', 'OR', 'AND', 'UNION'];
+
+        foreach ($invalidOperators as $operator) {
+            try {
+                $this->db->table('users')
+                    ->where('id', $operator, 1)
+                    ->get();
+
+                $this->fail("Expected exception for invalid operator: {$operator}");
+            } catch (\Hd3r\PdoWrapper\Exception\QueryException $e) {
+                $this->assertStringContainsString('Invalid operator', $e->getDebugMessage());
+            }
+        }
+    }
 }

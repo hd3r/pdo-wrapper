@@ -11,7 +11,7 @@ composer require hd3r/pdo-wrapper
 ## Quick Start
 
 ```php
-use PdoWrapper\Database;
+use Hd3r\PdoWrapper\Database;
 
 // Connect to SQLite
 $db = Database::sqlite(':memory:');
@@ -378,12 +378,20 @@ $db->on('transaction.rollback', fn() => echo "Transaction rolled back\n");
 
 ## Exceptions
 
-All exceptions extend from PHP's base `Exception`:
+All exceptions extend `DatabaseException`, which extends PHP's base `Exception`:
 
 ```php
-use PdoWrapper\Exception\ConnectionException;
-use PdoWrapper\Exception\QueryException;
-use PdoWrapper\Exception\TransactionException;
+use Hd3r\PdoWrapper\Exception\DatabaseException;
+use Hd3r\PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\Exception\QueryException;
+use Hd3r\PdoWrapper\Exception\TransactionException;
+
+// Catch all pdo-wrapper exceptions
+try {
+    $db->query('...');
+} catch (DatabaseException $e) {
+    // Catches ConnectionException, QueryException, TransactionException
+}
 
 try {
     $db = Database::mysql([...]);
