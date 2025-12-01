@@ -8,8 +8,21 @@ use PDO;
 use PDOException;
 use PdoWrapper\Exception\ConnectionException;
 
+/**
+ * SQLite database driver.
+ *
+ * Connects to SQLite databases using PDO.
+ * Defaults to in-memory database if no path specified.
+ */
 class SqliteDriver extends AbstractDriver
 {
+    /**
+     * Create a SQLite database connection.
+     *
+     * @param string|null $path Path to SQLite file, ':memory:' for in-memory, or null
+     *                          Falls back to DB_SQLITE_PATH env var, then ':memory:'
+     * @throws ConnectionException When connection fails
+     */
     public function __construct(?string $path = null)
     {
         $path = $path ?? $_ENV['DB_SQLITE_PATH'] ?? ':memory:';

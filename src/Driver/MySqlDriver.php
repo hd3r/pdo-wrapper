@@ -8,10 +8,31 @@ use PDO;
 use PDOException;
 use PdoWrapper\Exception\ConnectionException;
 
+/**
+ * MySQL database driver.
+ *
+ * Connects to MySQL databases using PDO with utf8mb4 charset by default.
+ * Supports configuration via array or environment variables.
+ */
 class MySqlDriver extends AbstractDriver
 {
     /**
+     * Create a MySQL database connection.
+     *
+     * Config keys:
+     * - host: MySQL server hostname (required)
+     * - database: Database name (required)
+     * - username: Database username (required)
+     * - password: Database password (optional)
+     * - port: Server port (default: 3306)
+     * - charset: Connection charset (default: utf8mb4)
+     * - options: Additional PDO options
+     *
+     * Falls back to environment variables: DB_HOST, DB_DATABASE,
+     * DB_USERNAME, DB_PASSWORD, DB_PORT
+     *
      * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, charset?: string, options?: array} $config
+     * @throws ConnectionException When required config is missing or connection fails
      */
     public function __construct(array $config = [])
     {
@@ -57,6 +78,16 @@ class MySqlDriver extends AbstractDriver
         }
     }
 
+    /**
+     * Quote an identifier using MySQL backticks.
+     *
+     * Handles database.table and table.column format:
+     * - `users` → `users`
+     * - `mydb.users` → `mydb`.`users`
+     *
+     * @param string $identifier Identifier to quote
+     * @return string Quoted identifier
+     */
     protected function quoteIdentifier(string $identifier): string
     {
         // Handle schema.table or table.column format
@@ -71,6 +102,11 @@ class MySqlDriver extends AbstractDriver
         return '`' . str_replace('`', '``', $identifier) . '`';
     }
 
+    /**
+     * Get the MySQL quote character (backtick).
+     *
+     * @return string
+     */
     protected function getQuoteChar(): string
     {
         return '`';

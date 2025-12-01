@@ -32,11 +32,16 @@ interface DatabaseInterface
 
     /**
      * Get the last inserted ID.
+     *
+     * @param string|null $name Sequence name (PostgreSQL) or null
+     * @return string|false Last insert ID or false on failure
      */
     public function lastInsertId(?string $name = null): string|false;
 
     /**
      * Get the underlying PDO instance.
+     *
+     * @return PDO
      */
     public function getPdo(): PDO;
 

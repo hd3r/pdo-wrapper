@@ -8,10 +8,30 @@ use PDO;
 use PDOException;
 use PdoWrapper\Exception\ConnectionException;
 
+/**
+ * PostgreSQL database driver.
+ *
+ * Connects to PostgreSQL databases using PDO.
+ * Supports configuration via array or environment variables.
+ */
 class PostgresDriver extends AbstractDriver
 {
     /**
+     * Create a PostgreSQL database connection.
+     *
+     * Config keys:
+     * - host: PostgreSQL server hostname (required)
+     * - database: Database name (required)
+     * - username: Database username (required)
+     * - password: Database password (optional)
+     * - port: Server port (default: 5432)
+     * - options: Additional PDO options
+     *
+     * Falls back to environment variables: DB_HOST, DB_DATABASE,
+     * DB_USERNAME, DB_PASSWORD, DB_PORT
+     *
      * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, options?: array} $config
+     * @throws ConnectionException When required config is missing or connection fails
      */
     public function __construct(array $config = [])
     {

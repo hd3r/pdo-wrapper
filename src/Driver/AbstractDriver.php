@@ -14,12 +14,32 @@ use PdoWrapper\Exception\TransactionException;
 use PdoWrapper\Traits\HasHooks;
 use Throwable;
 
+/**
+ * Abstract base driver implementing common database operations.
+ *
+ * Provides PDO wrapper functionality, CRUD helpers, transactions,
+ * and hooks. Extend this class for database-specific drivers.
+ */
 abstract class AbstractDriver implements DatabaseInterface
 {
     use HasHooks;
 
     protected PDO $pdo;
 
+    // =========================================================================
+    // Query Execution
+    // =========================================================================
+
+    /**
+     * Execute a SQL query and return the statement.
+     *
+     * Triggers 'query' hook on success, 'error' hook on failure.
+     *
+     * @param string $sql SQL query with placeholders
+     * @param array $params Parameters to bind
+     * @return PDOStatement Executed statement
+     * @throws QueryException On query failure
+     */
     public function query(string $sql, array $params = []): PDOStatement
     {
         $start = microtime(true);
@@ -53,21 +73,51 @@ abstract class AbstractDriver implements DatabaseInterface
         }
     }
 
+    /**
+     * Execute a SQL statement and return affected rows.
+     *
+     * @param string $sql SQL statement with placeholders
+     * @param array $params Parameters to bind
+     * @return int Number of affected rows
+     * @throws QueryException On query failure
+     */
     public function execute(string $sql, array $params = []): int
     {
         return $this->query($sql, $params)->rowCount();
     }
 
+    /**
+     * Get the last inserted ID.
+     *
+     * @param string|null $name Sequence name (PostgreSQL) or null
+     * @return string|false Last insert ID or false on failure
+     */
     public function lastInsertId(?string $name = null): string|false
     {
         return $this->pdo->lastInsertId($name);
     }
 
+    /**
+     * Get the underlying PDO instance.
+     *
+     * @return PDO
+     */
     public function getPdo(): PDO
     {
         return $this->pdo;
     }
 
+    // =========================================================================
+    // Transactions
+    // =========================================================================
+
+    /**
+     * Begin a transaction.
+     *
+     * Triggers 'transaction.begin' hook on success.
+     *
+     * @throws TransactionException On failure
+     */
     public function beginTransaction(): void
     {
         try {
@@ -83,6 +133,13 @@ abstract class AbstractDriver implements DatabaseInterface
         }
     }
 
+    /**
+     * Commit the current transaction.
+     *
+     * Triggers 'transaction.commit' hook on success.
+     *
+     * @throws TransactionException On failure
+     */
     public function commit(): void
     {
         try {
@@ -98,6 +155,13 @@ abstract class AbstractDriver implements DatabaseInterface
         }
     }
 
+    /**
+     * Roll back the current transaction.
+     *
+     * Triggers 'transaction.rollback' hook on success.
+     *
+     * @throws TransactionException On failure
+     */
     public function rollback(): void
     {
         try {
@@ -113,6 +177,15 @@ abstract class AbstractDriver implements DatabaseInterface
         }
     }
 
+    /**
+     * Execute a callback within a transaction.
+     *
+     * Auto-commits on success, auto-rollback on exception.
+     *
+     * @param Closure $callback Receives the driver instance
+     * @return mixed Return value of the callback
+     * @throws Throwable Re-throws any exception after rollback
+     */
     public function transaction(Closure $callback): mixed
     {
         $this->beginTransaction();
@@ -131,6 +204,14 @@ abstract class AbstractDriver implements DatabaseInterface
     // CRUD Helper
     // =========================================================================
 
+    /**
+     * Insert a row and return the last insert ID.
+     *
+     * @param string $table Table name (supports schema.table format)
+     * @param array $data Column => value pairs
+     * @return int|string Last insert ID
+     * @throws QueryException When $data is empty or query fails
+     */
     public function insert(string $table, array $data): int|string
     {
         if (empty($data)) {
@@ -155,6 +236,15 @@ abstract class AbstractDriver implements DatabaseInterface
         return $this->lastInsertId();
     }
 
+    /**
+     * Update rows matching WHERE conditions.
+     *
+     * @param string $table Table name (supports schema.table format)
+     * @param array $data Column => value pairs to update
+     * @param array $where WHERE conditions (column => value)
+     * @return int Number of affected rows
+     * @throws QueryException When $data or $where is empty (safety)
+     */
     public function update(string $table, array $data, array $where): int
     {
         if (empty($data)) {
@@ -192,6 +282,14 @@ abstract class AbstractDriver implements DatabaseInterface
         return $this->execute($sql, $params);
     }
 
+    /**
+     * Delete rows matching WHERE conditions.
+     *
+     * @param string $table Table name (supports schema.table format)
+     * @param array $where WHERE conditions (column => value)
+     * @return int Number of affected rows
+     * @throws QueryException When $where is empty (safety)
+     */
     public function delete(string $table, array $where): int
     {
         if (empty($where)) {
@@ -212,6 +310,14 @@ abstract class AbstractDriver implements DatabaseInterface
         return $this->execute($sql, $params);
     }
 
+    /**
+     * Find a single row by WHERE conditions.
+     *
+     * @param string $table Table name (supports schema.table format)
+     * @param array $where WHERE conditions (column => value)
+     * @return array|null Row as associative array or null if not found
+     * @throws QueryException When $where is empty
+     */
     public function findOne(string $table, array $where): ?array
     {
         if (empty($where)) {
@@ -235,6 +341,14 @@ abstract class AbstractDriver implements DatabaseInterface
         return $result ?: null;
     }
 
+    /**
+     * Find all rows matching WHERE conditions.
+     *
+     * @param string $table Table name (supports schema.table format)
+     * @param array $where WHERE conditions (optional, empty = all rows)
+     * @return array Array of rows as associative arrays
+     * @throws QueryException On query failure
+     */
     public function findAll(string $table, array $where = []): array
     {
         if (empty($where)) {
@@ -254,6 +368,17 @@ abstract class AbstractDriver implements DatabaseInterface
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Update multiple rows by their key column.
+     *
+     * Each row must contain the key column for matching.
+     *
+     * @param string $table Table name (supports schema.table format)
+     * @param array $rows Array of rows, each with key column
+     * @param string $keyColumn Column to match rows (default: 'id')
+     * @return int Total number of affected rows
+     * @throws QueryException When a row is missing the key column
+     */
     public function updateMultiple(string $table, array $rows, string $keyColumn = 'id'): int
     {
         if (empty($rows)) {
@@ -287,8 +412,15 @@ abstract class AbstractDriver implements DatabaseInterface
 
     /**
      * Quote an identifier (table/column name).
-     * Handles schema.table format (e.g., "public.users" -> "public"."users").
-     * Override in driver for DB-specific quoting.
+     *
+     * Handles schema.table and table.column format:
+     * - "users" -> "users"
+     * - "public.users" -> "public"."users"
+     *
+     * Override in driver for DB-specific quoting (e.g., backticks for MySQL).
+     *
+     * @param string $identifier Table or column name
+     * @return string Quoted identifier
      */
     protected function quoteIdentifier(string $identifier): string
     {
@@ -308,7 +440,7 @@ abstract class AbstractDriver implements DatabaseInterface
      * Build WHERE clause from conditions array.
      *
      * @param array $where Column => value pairs
-     * @return array [sql, params]
+     * @return array [sql, params] - SQL string and parameter values
      */
     protected function buildWhereClause(array $where): array
     {
@@ -325,7 +457,12 @@ abstract class AbstractDriver implements DatabaseInterface
 
     /**
      * Get the quote character for identifiers.
+     *
      * Override in driver for DB-specific quoting.
+     * - PostgreSQL/SQLite: " (double quote)
+     * - MySQL: ` (backtick)
+     *
+     * @return string Quote character
      */
     protected function getQuoteChar(): string
     {
@@ -336,6 +473,12 @@ abstract class AbstractDriver implements DatabaseInterface
     // Query Builder
     // =========================================================================
 
+    /**
+     * Create a query builder for the given table.
+     *
+     * @param string $table Table name (supports schema.table format)
+     * @return \PdoWrapper\Query\QueryBuilder
+     */
     public function table(string $table): \PdoWrapper\Query\QueryBuilder
     {
         return new \PdoWrapper\Query\QueryBuilder($this, $table, $this->getQuoteChar());
