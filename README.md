@@ -337,10 +337,38 @@ $affected = $db->table('users')
 ## Transactions
 
 ```php
-// Automatic transaction with callback
+// Automatic transaction with callback (auto-rollback on exception)
 $db->transaction(function ($db) {
     $db->insert('users', ['name' => 'John']);
     $db->insert('profiles', ['user_id' => $db->lastInsertId()]);
+});
+
+// With return value - real world example
+$orderId = $db->transaction(function ($db) use ($orderData, $items) {
+    // Insert order
+    $orderId = $db->insert('orders', [
+        'user_id' => $orderData['user_id'],
+        'total' => $orderData['total'],
+        'status' => 'pending'
+    ]);
+
+    // Insert order items
+    foreach ($items as $item) {
+        $db->insert('order_items', [
+            'order_id' => $orderId,
+            'product_id' => $item['product_id'],
+            'quantity' => $item['quantity'],
+            'price' => $item['price']
+        ]);
+
+        // Update inventory with raw query
+        $db->execute(
+            'UPDATE products SET stock = stock - ? WHERE id = ?',
+            [$item['quantity'], $item['product_id']]
+        );
+    }
+
+    return $orderId;  // Return value is passed through
 });
 
 // Manual transaction control
