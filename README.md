@@ -1,6 +1,6 @@
 # PDO Wrapper
 
-A lightweight PHP PDO wrapper with fluent Query Builder, supporting MySQL, PostgreSQL, and SQLite.
+A lightweight PHP PDO wrapper with fluent Query Builder, supporting MySQL/MariaDB, PostgreSQL, and SQLite.
 
 ## Installation
 

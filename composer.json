@@ -1,7 +1,7 @@
 {
     "name": "hd3r/pdo-wrapper",
     "description": "A lightweight PDO wrapper with fluent query builder and CRUD methods for MySQL, PostgreSQL and SQLite",
-    "keywords": ["mysql", "php", "postgres", "crud", "database", "pdo", "sqlite", "query-builder", "pdo-wrapper"],
+    "keywords": ["mysql", "mariadb", "php", "postgres", "crud", "database", "pdo", "sqlite", "query-builder", "pdo-wrapper"],
     "type": "library",
     "license": "MIT",
     "authors": [
