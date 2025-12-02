@@ -460,10 +460,10 @@ $db->table('users')
 
 ### User Input in Column Names
 
-Always validate user input before using it as column names:
+Column names are safely quoted against SQL injection, but you should still validate user input to provide meaningful error messages instead of database errors:
 
 ```php
-// ✅ SAFE - Whitelist allowed columns
+// ✅ RECOMMENDED - Whitelist for better error handling
 $allowedColumns = ['id', 'name', 'email', 'created_at'];
 $column = $_GET['column'];
 
@@ -474,7 +474,7 @@ if (!in_array($column, $allowedColumns, true)) {
 $db->table('users')->orderBy($column)->get();
 ```
 
-The same principle applies to `select()`, `orderBy()`, `groupBy()`, and `join()`.
+This applies to `select()`, `orderBy()`, `groupBy()`, and `join()`.
 
 ## Requirements
 
