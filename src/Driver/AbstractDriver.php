@@ -68,7 +68,7 @@ abstract class AbstractDriver implements DatabaseInterface
                 message: 'Query failed',
                 code: (int)$e->getCode(),
                 previous: $e,
-                debugMessage: sprintf('%s | SQL: %s', $e->getMessage(), $sql)
+                debugMessage: sprintf('%s | SQL: %s | Params: %s', $e->getMessage(), $sql, json_encode($params))
             );
         }
     }
@@ -94,7 +94,16 @@ abstract class AbstractDriver implements DatabaseInterface
      */
     public function lastInsertId(?string $name = null): string|false
     {
-        return $this->pdo->lastInsertId($name);
+        try {
+            return $this->pdo->lastInsertId($name);
+        } catch (PDOException $e) {
+            throw new QueryException(
+                message: 'Failed to get last insert ID',
+                code: (int)$e->getCode(),
+                previous: $e,
+                debugMessage: $e->getMessage()
+            );
+        }
     }
 
     /**
