@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Driver\PostgresDriver;
 use Hd3r\PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\Exception\QueryException;
 
 class PostgresDriverIntegrationTest extends TestCase
 {
@@ -63,6 +64,14 @@ class PostgresDriverIntegrationTest extends TestCase
         $id = $this->driver->lastInsertId('test_pg2_id_seq');
 
         $this->assertSame('1', $id);
+    }
+
+    public function testLastInsertIdWithInvalidSequenceThrowsQueryException(): void
+    {
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('Failed to get last insert ID');
+
+        $this->driver->lastInsertId('non_existent_sequence_that_does_not_exist');
     }
 
     public function testConnectionUsesExceptionErrorMode(): void
