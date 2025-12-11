@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Driver\SqliteDriver;
 use Hd3r\PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\Exception\QueryException;
 
 class SqliteDriverIntegrationTest extends TestCase
 {
@@ -112,5 +113,41 @@ class SqliteDriverIntegrationTest extends TestCase
         $this->expectException(ConnectionException::class);
 
         new SqliteDriver('/nonexistent/directory/that/does/not/exist/test.db');
+    }
+
+    public function testForeignKeysAreEnabled(): void
+    {
+        $driver = new SqliteDriver();
+
+        $result = $driver->query('PRAGMA foreign_keys')->fetch();
+
+        $this->assertSame(1, $result['foreign_keys']);
+    }
+
+    /**
+     * Regression test: Foreign key constraints must be enforced.
+     *
+     * Previously, SQLite FK constraints were defined but not enforced,
+     * allowing inserts with invalid foreign keys (silent data corruption).
+     */
+    public function testForeignKeyConstraintIsEnforced(): void
+    {
+        $driver = new SqliteDriver();
+
+        // Create parent table
+        $driver->execute('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+
+        // Create child table with FK constraint
+        $driver->execute('CREATE TABLE posts (id INTEGER PRIMARY KEY, user_id INTEGER REFERENCES users(id))');
+
+        // Insert a valid user
+        $driver->execute('INSERT INTO users (id, name) VALUES (1, ?)', ['Max']);
+
+        // This should work - valid FK
+        $driver->execute('INSERT INTO posts (user_id) VALUES (1)');
+
+        // This should fail - user 999 does not exist
+        $this->expectException(QueryException::class);
+        $driver->execute('INSERT INTO posts (user_id) VALUES (999)');
     }
 }

@@ -37,6 +37,7 @@ class SqliteDriver extends AbstractDriver
 
         try {
             $this->pdo = new PDO($dsn, null, null, $defaultOptions);
+            $this->pdo->exec('PRAGMA foreign_keys = ON');
         } catch (PDOException $e) {
             throw new ConnectionException(
                 message: 'Database connection failed',
