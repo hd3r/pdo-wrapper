@@ -394,25 +394,42 @@ abstract class AbstractDriver implements DatabaseInterface
             return 0;
         }
 
-        $affected = 0;
+        $manageTransaction = !$this->pdo->inTransaction();
 
-        foreach ($rows as $row) {
-            if (!isset($row[$keyColumn])) {
-                throw new QueryException(
-                    message: 'Update failed',
-                    debugMessage: sprintf('Missing key column "%s" in row', $keyColumn)
-                );
-            }
-
-            $keyValue = $row[$keyColumn];
-            $data = array_diff_key($row, [$keyColumn => null]);
-
-            if (!empty($data)) {
-                $affected += $this->update($table, $data, [$keyColumn => $keyValue]);
-            }
+        if ($manageTransaction) {
+            $this->beginTransaction();
         }
 
-        return $affected;
+        try {
+            $affected = 0;
+
+            foreach ($rows as $row) {
+                if (!isset($row[$keyColumn])) {
+                    throw new QueryException(
+                        message: 'Update failed',
+                        debugMessage: sprintf('Missing key column "%s" in row', $keyColumn)
+                    );
+                }
+
+                $keyValue = $row[$keyColumn];
+                $data = array_diff_key($row, [$keyColumn => null]);
+
+                if (!empty($data)) {
+                    $affected += $this->update($table, $data, [$keyColumn => $keyValue]);
+                }
+            }
+
+            if ($manageTransaction) {
+                $this->commit();
+            }
+
+            return $affected;
+        } catch (\Throwable $e) {
+            if ($manageTransaction) {
+                $this->rollback();
+            }
+            throw $e;
+        }
     }
 
     // =========================================================================

@@ -8,6 +8,7 @@ use Exception;
 use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Exception\QueryException;
 use Hd3r\PdoWrapper\Exception\TransactionException;
 
 class TransactionTest extends TestCase
@@ -114,5 +115,77 @@ class TransactionTest extends TestCase
         }
 
         $this->assertTrue($rollbackTriggered);
+    }
+
+    /**
+     * Regression test: updateMultiple must rollback all changes on failure.
+     *
+     * Previously, updateMultiple had no transaction wrapper, causing partial
+     * updates when an error occurred mid-batch (e.g., 49/100 rows updated).
+     */
+    public function testUpdateMultipleRollsBackOnFailure(): void
+    {
+        // Insert test data
+        $this->db->insert('users', ['id' => 1, 'name' => 'Max']);
+        $this->db->insert('users', ['id' => 2, 'name' => 'Anna']);
+        $this->db->insert('users', ['id' => 3, 'name' => 'Tom']);
+
+        // Try to update with one row missing the key column (will fail)
+        try {
+            $this->db->updateMultiple('users', [
+                ['id' => 1, 'name' => 'Max Updated'],
+                ['id' => 2, 'name' => 'Anna Updated'],
+                ['name' => 'Tom Updated'], // Missing 'id' - will throw
+            ]);
+            $this->fail('Expected QueryException was not thrown');
+        } catch (QueryException $e) {
+            // Expected
+        }
+
+        // All rows should be unchanged (rollback)
+        $users = $this->db->findAll('users');
+        $this->assertSame('Max', $users[0]['name']);
+        $this->assertSame('Anna', $users[1]['name']);
+        $this->assertSame('Tom', $users[2]['name']);
+    }
+
+    public function testUpdateMultipleCommitsOnSuccess(): void
+    {
+        // Insert test data
+        $this->db->insert('users', ['id' => 1, 'name' => 'Max']);
+        $this->db->insert('users', ['id' => 2, 'name' => 'Anna']);
+
+        // Update all rows
+        $affected = $this->db->updateMultiple('users', [
+            ['id' => 1, 'name' => 'Max Updated'],
+            ['id' => 2, 'name' => 'Anna Updated'],
+        ]);
+
+        $this->assertSame(2, $affected);
+
+        // All rows should be updated
+        $users = $this->db->findAll('users');
+        $this->assertSame('Max Updated', $users[0]['name']);
+        $this->assertSame('Anna Updated', $users[1]['name']);
+    }
+
+    public function testUpdateMultipleRespectsExistingTransaction(): void
+    {
+        // Insert test data
+        $this->db->insert('users', ['id' => 1, 'name' => 'Max']);
+
+        // Start our own transaction
+        $this->db->beginTransaction();
+
+        // updateMultiple should not start its own transaction
+        $this->db->updateMultiple('users', [
+            ['id' => 1, 'name' => 'Max Updated'],
+        ]);
+
+        // Rollback our transaction - the update should be undone
+        $this->db->rollback();
+
+        $user = $this->db->findOne('users', ['id' => 1]);
+        $this->assertSame('Max', $user['name']);
     }
 }
