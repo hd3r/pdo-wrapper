@@ -18,11 +18,11 @@ class PostgresWorkflowTest extends AbstractWorkflowTest
     protected function createDatabase(): DatabaseInterface
     {
         return Database::postgres([
-            'host' => '127.0.0.1',
-            'port' => 5432,
-            'database' => 'pdo_wrapper_test',
-            'username' => 'postgres',
-            'password' => 'postgres',
+            'host' => $_ENV['POSTGRES_HOST'] ?? '127.0.0.1',
+            'port' => (int) ($_ENV['POSTGRES_PORT'] ?? 5432),
+            'database' => $_ENV['POSTGRES_DATABASE'] ?? 'pdo_wrapper_test',
+            'username' => $_ENV['POSTGRES_USERNAME'] ?? 'postgres',
+            'password' => $_ENV['POSTGRES_PASSWORD'] ?? 'postgres',
         ]);
     }
 

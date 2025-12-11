@@ -14,19 +14,22 @@ use Hd3r\PdoWrapper\Exception\TransactionException;
 
 class MySqlDriverIntegrationTest extends TestCase
 {
-    private static array $config = [
-        'host' => '127.0.0.1',
-        'database' => 'pdo_wrapper_test',
-        'username' => 'root',
-        'password' => 'root',
-        'port' => 3306,
-    ];
-
     private MySqlDriver $driver;
+
+    private static function getConfig(): array
+    {
+        return [
+            'host' => $_ENV['MYSQL_HOST'] ?? '127.0.0.1',
+            'port' => (int) ($_ENV['MYSQL_PORT'] ?? 3306),
+            'database' => $_ENV['MYSQL_DATABASE'] ?? 'pdo_wrapper_test',
+            'username' => $_ENV['MYSQL_USERNAME'] ?? 'root',
+            'password' => $_ENV['MYSQL_PASSWORD'] ?? 'root',
+        ];
+    }
 
     protected function setUp(): void
     {
-        $this->driver = new MySqlDriver(self::$config);
+        $this->driver = new MySqlDriver(self::getConfig());
     }
 
     public function testImplementsDatabaseInterface(): void

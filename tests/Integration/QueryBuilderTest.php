@@ -54,6 +54,25 @@ class QueryBuilderTest extends TestCase
         $this->assertSame('Max', $user['name']);
     }
 
+    /**
+     * Regression test: first() should not mutate the builder state.
+     *
+     * Previously, first() would set limit(1) on the builder permanently,
+     * causing subsequent get() calls to return only 1 row.
+     */
+    public function testFirstDoesNotMutateBuilderState(): void
+    {
+        $builder = $this->db->table('users');
+
+        // Call first() - this should NOT affect the builder
+        $first = $builder->first();
+        $this->assertNotNull($first);
+
+        // get() should still return all 3 rows, not just 1
+        $all = $builder->get();
+        $this->assertCount(3, $all, 'first() mutated the builder state - get() returned only ' . count($all) . ' row(s) instead of 3');
+    }
+
     public function testFirstReturnsNullWhenEmpty(): void
     {
         $user = $this->db->table('users')->where('id', 999)->first();

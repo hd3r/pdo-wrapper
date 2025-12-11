@@ -13,6 +13,20 @@ services:
       timeout: 5s
       retries: 10
 
+  mariadb:
+    image: mariadb:10.11
+    container_name: pdo-wrapper-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: pdo_wrapper_test
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   postgres:
     image: postgres:15
     container_name: pdo-wrapper-postgres

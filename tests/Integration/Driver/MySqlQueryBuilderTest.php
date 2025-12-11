@@ -15,10 +15,11 @@ class MySqlQueryBuilderTest extends TestCase
     protected function setUp(): void
     {
         $this->db = Database::mysql([
-            'host' => '127.0.0.1',
-            'database' => 'pdo_wrapper_test',
-            'username' => 'root',
-            'password' => 'root',
+            'host' => $_ENV['MYSQL_HOST'] ?? '127.0.0.1',
+            'port' => (int) ($_ENV['MYSQL_PORT'] ?? 3306),
+            'database' => $_ENV['MYSQL_DATABASE'] ?? 'pdo_wrapper_test',
+            'username' => $_ENV['MYSQL_USERNAME'] ?? 'root',
+            'password' => $_ENV['MYSQL_PASSWORD'] ?? 'root',
         ]);
 
         $this->db->execute('DROP TABLE IF EXISTS qb_test');

@@ -12,25 +12,33 @@ use Hd3r\PdoWrapper\Driver\SqliteDriver;
 
 class DatabaseTest extends TestCase
 {
+    /**
+     * @group mysql
+     */
     public function testMysqlReturnsDriver(): void
     {
         $driver = Database::mysql([
-            'host' => '127.0.0.1',
-            'database' => 'pdo_wrapper_test',
-            'username' => 'root',
-            'password' => 'root',
+            'host' => $_ENV['MYSQL_HOST'] ?? '127.0.0.1',
+            'port' => (int) ($_ENV['MYSQL_PORT'] ?? 3306),
+            'database' => $_ENV['MYSQL_DATABASE'] ?? 'pdo_wrapper_test',
+            'username' => $_ENV['MYSQL_USERNAME'] ?? 'root',
+            'password' => $_ENV['MYSQL_PASSWORD'] ?? 'root',
         ]);
 
         $this->assertInstanceOf(MySqlDriver::class, $driver);
     }
 
+    /**
+     * @group postgres
+     */
     public function testPostgresReturnsDriver(): void
     {
         $driver = Database::postgres([
-            'host' => '127.0.0.1',
-            'database' => 'pdo_wrapper_test',
-            'username' => 'postgres',
-            'password' => 'postgres',
+            'host' => $_ENV['POSTGRES_HOST'] ?? '127.0.0.1',
+            'port' => (int) ($_ENV['POSTGRES_PORT'] ?? 5432),
+            'database' => $_ENV['POSTGRES_DATABASE'] ?? 'pdo_wrapper_test',
+            'username' => $_ENV['POSTGRES_USERNAME'] ?? 'postgres',
+            'password' => $_ENV['POSTGRES_PASSWORD'] ?? 'postgres',
         ]);
 
         $this->assertInstanceOf(PostgresDriver::class, $driver);

@@ -14,19 +14,22 @@ use Hd3r\PdoWrapper\Exception\QueryException;
 
 class PostgresDriverIntegrationTest extends TestCase
 {
-    private static array $config = [
-        'host' => '127.0.0.1',
-        'database' => 'pdo_wrapper_test',
-        'username' => 'postgres',
-        'password' => 'postgres',
-        'port' => 5432,
-    ];
-
     private PostgresDriver $driver;
+
+    private static function getConfig(): array
+    {
+        return [
+            'host' => $_ENV['POSTGRES_HOST'] ?? '127.0.0.1',
+            'port' => (int) ($_ENV['POSTGRES_PORT'] ?? 5432),
+            'database' => $_ENV['POSTGRES_DATABASE'] ?? 'pdo_wrapper_test',
+            'username' => $_ENV['POSTGRES_USERNAME'] ?? 'postgres',
+            'password' => $_ENV['POSTGRES_PASSWORD'] ?? 'postgres',
+        ];
+    }
 
     protected function setUp(): void
     {
-        $this->driver = new PostgresDriver(self::$config);
+        $this->driver = new PostgresDriver(self::getConfig());
     }
 
     public function testImplementsDatabaseInterface(): void
@@ -104,10 +107,10 @@ class PostgresDriverIntegrationTest extends TestCase
     {
         try {
             new PostgresDriver([
-                'host' => '127.0.0.1',
+                'host' => $_ENV['POSTGRES_HOST'] ?? '127.0.0.1',
                 'database' => 'nonexistent_db_that_does_not_exist',
-                'username' => 'postgres',
-                'password' => 'postgres',
+                'username' => $_ENV['POSTGRES_USERNAME'] ?? 'postgres',
+                'password' => $_ENV['POSTGRES_PASSWORD'] ?? 'postgres',
             ]);
         } catch (ConnectionException $e) {
             $this->assertSame('Database connection failed', $e->getMessage());
