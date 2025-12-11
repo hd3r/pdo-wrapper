@@ -8,6 +8,9 @@ use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\Driver\PostgresDriver;
 
+/**
+ * @group postgres
+ */
 class PostgresQueryBuilderTest extends TestCase
 {
     private PostgresDriver $db;

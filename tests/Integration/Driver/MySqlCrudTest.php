@@ -8,6 +8,9 @@ use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\Driver\MySqlDriver;
 
+/**
+ * @group mysql
+ */
 class MySqlCrudTest extends TestCase
 {
     private MySqlDriver $db;

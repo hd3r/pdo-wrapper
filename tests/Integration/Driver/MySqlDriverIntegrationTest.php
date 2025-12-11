@@ -12,6 +12,9 @@ use Hd3r\PdoWrapper\Driver\MySqlDriver;
 use Hd3r\PdoWrapper\Exception\ConnectionException;
 use Hd3r\PdoWrapper\Exception\TransactionException;
 
+/**
+ * @group mysql
+ */
 class MySqlDriverIntegrationTest extends TestCase
 {
     private MySqlDriver $driver;

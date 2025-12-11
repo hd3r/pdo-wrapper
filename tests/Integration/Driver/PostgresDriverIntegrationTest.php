@@ -12,6 +12,9 @@ use Hd3r\PdoWrapper\Driver\PostgresDriver;
 use Hd3r\PdoWrapper\Exception\ConnectionException;
 use Hd3r\PdoWrapper\Exception\QueryException;
 
+/**
+ * @group postgres
+ */
 class PostgresDriverIntegrationTest extends TestCase
 {
     private PostgresDriver $driver;
