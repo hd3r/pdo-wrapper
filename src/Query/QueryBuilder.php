@@ -518,8 +518,8 @@ class QueryBuilder
      */
     public function first(): ?array
     {
-        $this->limit(1);
-        $results = $this->get();
+        $query = clone $this;
+        $results = $query->limit(1)->get();
 
         return $results[0] ?? null;
     }
