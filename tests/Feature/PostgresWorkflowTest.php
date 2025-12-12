@@ -6,6 +6,7 @@ namespace Hd3r\PdoWrapper\Tests\Feature;
 
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Exception\QueryException;
 use Hd3r\PdoWrapper\Tests\Feature\Concerns\AbstractWorkflowTest;
 
 /**
@@ -132,5 +133,17 @@ class PostgresWorkflowTest extends AbstractWorkflowTest
 
         // Clean up
         $this->db->delete('users', ['id' => $id]);
+    }
+
+    /**
+     * Test that insert() with empty data throws QueryException.
+     * This tests the PostgreSQL-specific insert() override.
+     */
+    public function testInsertEmptyDataThrowsException(): void
+    {
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('Insert failed');
+
+        $this->db->insert('users', []);
     }
 }

@@ -113,12 +113,17 @@ class PostgresDriver extends AbstractDriver
         /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // @codeCoverageIgnoreStart
+        // Defensive check - in practice, PostgreSQL throws "column id does not exist"
+        // before reaching here if table has no 'id' column, and fetch() always returns
+        // a row for INSERT RETURNING queries
         if ($result === false || !isset($result['id'])) {
             throw new QueryException(
                 message: 'Insert failed',
                 debugMessage: sprintf('Could not retrieve ID via RETURNING clause | SQL: %s', $sql)
             );
         }
+        // @codeCoverageIgnoreEnd
 
         /** @var int|string $id */
         $id = $result['id'];

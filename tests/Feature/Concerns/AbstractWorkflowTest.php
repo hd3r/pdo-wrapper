@@ -139,9 +139,9 @@ abstract class AbstractWorkflowTest extends TestCase
         $tag1Id = $this->db->insert('tags', ['name' => 'PHP']);
         $tag2Id = $this->db->insert('tags', ['name' => 'Database']);
 
-        // 2. Associate tags with post
-        $this->db->insert('post_tags', ['post_id' => $postId, 'tag_id' => $tag1Id]);
-        $this->db->insert('post_tags', ['post_id' => $postId, 'tag_id' => $tag2Id]);
+        // 2. Associate tags with post (junction table has no 'id' column, use execute)
+        $this->db->execute('INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)', [$postId, $tag1Id]);
+        $this->db->execute('INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)', [$postId, $tag2Id]);
 
         // 3. Get post with tags using join
         $postTags = $this->db->table('post_tags')
