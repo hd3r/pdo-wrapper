@@ -632,9 +632,12 @@ class QueryBuilder
         $this->offset = $originalOffset;
         $this->orderBy = $originalOrderBy;
 
+        // @codeCoverageIgnoreStart
+        // Defensive: fetch() never returns false for aggregates (they always return one row)
         if ($result === false) {
             return null;
         }
+        // @codeCoverageIgnoreEnd
 
         return $result['aggregate'] ?? null;
     }

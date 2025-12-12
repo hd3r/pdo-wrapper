@@ -9,6 +9,7 @@ use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Exception\QueryException;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class TransactionTest extends TestCase
 {
@@ -186,5 +187,98 @@ class TransactionTest extends TestCase
 
         $user = $this->db->findOne('users', ['id' => 1]);
         $this->assertSame('Max', $user['name']);
+    }
+
+    // =========================================================================
+    // Rollback Failure Tests
+    // These test that the original exception is preserved when rollback itself
+    // fails (e.g., due to connection loss). This is defensive code coverage.
+    // =========================================================================
+
+    /**
+     * Test that transaction() preserves original exception when rollback fails.
+     *
+     * Uses a driver that throws on rollback to simulate connection loss.
+     * The original exception should be re-thrown, not the rollback failure.
+     */
+    public function testTransactionPreservesOriginalExceptionWhenRollbackFails(): void
+    {
+        $failingDb = new class () extends \Hd3r\PdoWrapper\Driver\SqliteDriver {
+            private bool $shouldFailRollback = false;
+
+            public function __construct()
+            {
+                parent::__construct(':memory:');
+                $this->execute('CREATE TABLE test (id INTEGER PRIMARY KEY)');
+            }
+
+            public function setShouldFailRollback(bool $fail): void
+            {
+                $this->shouldFailRollback = $fail;
+            }
+
+            public function rollback(): void
+            {
+                if ($this->shouldFailRollback) {
+                    throw new \Hd3r\PdoWrapper\Exception\TransactionException('Rollback failed');
+                }
+                parent::rollback();
+            }
+        };
+
+        $failingDb->setShouldFailRollback(true);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Original error');
+
+        $failingDb->transaction(function ($driver) {
+            $driver->execute('INSERT INTO test (id) VALUES (1)');
+            throw new RuntimeException('Original error');
+        });
+    }
+
+    /**
+     * Test that updateMultiple() preserves original exception when rollback fails.
+     *
+     * Simulates connection loss by closing PDO mid-operation.
+     * The original exception should be re-thrown, not the rollback failure.
+     */
+    public function testUpdateMultiplePreservesOriginalExceptionWhenRollbackFails(): void
+    {
+        // We use a custom driver that throws on rollback to simulate connection loss
+        $failingDb = new class () extends \Hd3r\PdoWrapper\Driver\SqliteDriver {
+            private bool $shouldFailRollback = false;
+
+            public function __construct()
+            {
+                parent::__construct(':memory:');
+                $this->execute('CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)');
+                $this->insert('test', ['id' => 1, 'name' => 'Original']);
+            }
+
+            public function setShouldFailRollback(bool $fail): void
+            {
+                $this->shouldFailRollback = $fail;
+            }
+
+            public function rollback(): void
+            {
+                if ($this->shouldFailRollback) {
+                    throw new \Hd3r\PdoWrapper\Exception\TransactionException('Rollback failed');
+                }
+                parent::rollback();
+            }
+        };
+
+        $failingDb->setShouldFailRollback(true);
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('Update failed');
+
+        // This should throw QueryException for missing key, not TransactionException
+        $failingDb->updateMultiple('test', [
+            ['id' => 1, 'name' => 'Updated'],
+            ['name' => 'No ID'], // Missing key column - triggers error
+        ]);
     }
 }
