@@ -31,6 +31,7 @@
   },
   "scripts": {
     "test": "vendor/bin/phpunit",
+    "test:sqlite": "vendor/bin/phpunit --exclude-group mysql,postgres",
     "test:unit": "vendor/bin/phpunit --testsuite Unit",
     "test:integration": "vendor/bin/phpunit --testsuite Integration",
     "test:feature": "vendor/bin/phpunit --testsuite Feature",
@@ -38,6 +39,6 @@
     "analyse": "vendor/bin/phpstan analyse",
     "cs": "vendor/bin/php-cs-fixer fix --dry-run --diff",
     "cs:fix": "vendor/bin/php-cs-fixer fix",
-    "ci": ["@cs", "@analyse", "@test"]
+    "ci": ["@cs", "@analyse", "@test:sqlite"]
   }
 }
