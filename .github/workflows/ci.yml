@@ -32,7 +32,7 @@ jobs:
         run: vendor/bin/phpunit --testsuite Unit --no-coverage
 
       - name: Run Integration tests
-        run: vendor/bin/phpunit --testsuite Integration --no-coverage
+        run: vendor/bin/phpunit --testsuite Integration --exclude-group mysql,postgres --no-coverage
 
   test-mysql:
     runs-on: ubuntu-latest
