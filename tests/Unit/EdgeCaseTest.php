@@ -6,6 +6,7 @@ namespace Hd3r\PdoWrapper\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
+use Hd3r\PdoWrapper\Driver\SqliteDriver;
 use Hd3r\PdoWrapper\Exception\QueryException;
 
 /**
@@ -251,5 +252,60 @@ class EdgeCaseTest extends TestCase
         $this->assertStringContainsString('"users"."id"', $sql);
         $this->assertStringContainsString('"users"."name"', $sql);
         $this->assertStringContainsString('"users"."active"', $sql);
+    }
+
+    // =========================================================================
+    // INSERT LASTINSERTID BUG FIX TEST
+    // Bug: insert() returned false when lastInsertId() failed instead of throwing
+    // =========================================================================
+
+    public function testInsertThrowsExceptionWhenLastInsertIdReturnsFalse(): void
+    {
+        // Create a driver that returns false from lastInsertId()
+        $driver = new class extends SqliteDriver {
+            public function __construct()
+            {
+                parent::__construct(':memory:');
+            }
+
+            public function lastInsertId(?string $name = null): string|false
+            {
+                return false;
+            }
+        };
+
+        $driver->execute('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+
+        $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('Insert failed');
+
+        $driver->insert('users', ['name' => 'Test']);
+    }
+
+    public function testInsertThrowsExceptionWithDebugMessageContainingSqlAndParams(): void
+    {
+        // Create a driver that returns false from lastInsertId()
+        $driver = new class extends SqliteDriver {
+            public function __construct()
+            {
+                parent::__construct(':memory:');
+            }
+
+            public function lastInsertId(?string $name = null): string|false
+            {
+                return false;
+            }
+        };
+
+        $driver->execute('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+
+        try {
+            $driver->insert('users', ['name' => 'Test']);
+            $this->fail('Expected QueryException was not thrown');
+        } catch (QueryException $e) {
+            $this->assertStringContainsString('Failed to retrieve last insert ID', $e->getDebugMessage());
+            $this->assertStringContainsString('SQL:', $e->getDebugMessage());
+            $this->assertStringContainsString('Params:', $e->getDebugMessage());
+        }
     }
 }

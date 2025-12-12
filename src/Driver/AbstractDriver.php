@@ -242,7 +242,16 @@ abstract class AbstractDriver implements DatabaseInterface
 
         $this->query($sql, array_values($data));
 
-        return $this->lastInsertId();
+        $lastId = $this->lastInsertId();
+
+        if ($lastId === false) {
+            throw new QueryException(
+                message: 'Insert failed',
+                debugMessage: sprintf('Failed to retrieve last insert ID | SQL: %s | Params: %s', $sql, json_encode(array_values($data)))
+            );
+        }
+
+        return $lastId;
     }
 
     /**
