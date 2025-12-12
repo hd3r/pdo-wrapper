@@ -84,7 +84,7 @@ All drivers support configuration via environment variables:
 // DB_SQLITE_PATH
 ```
 
-**Note:** Environment variables are read from `$_ENV`, not `getenv()`. This is a deliberate design decision for thread-safety. Use a library like [hd3r/env-loader](https://github.com/hd3r/env-loader) to load `.env` files into `$_ENV`.
+**Priority:** `$config` array > `$_ENV` > `getenv()`. The library checks `$_ENV` first (thread-safe), then falls back to `getenv()` for legacy compatibility. Use a library like [hd3r/env-loader](https://github.com/hd3r/env-loader) to load `.env` files.
 
 ## Raw Queries
 
