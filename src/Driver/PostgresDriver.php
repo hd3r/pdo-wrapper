@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Driver;
 
+use Hd3r\PdoWrapper\Exception\ConnectionException;
 use PDO;
 use PDOException;
-use Hd3r\PdoWrapper\Exception\ConnectionException;
 
 /**
  * PostgreSQL database driver.
@@ -30,7 +30,8 @@ class PostgresDriver extends AbstractDriver
      * Falls back to environment variables: DB_HOST, DB_DATABASE,
      * DB_USERNAME, DB_PASSWORD, DB_PORT
      *
-     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, options?: array} $config
+     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, options?: array<int, mixed>} $config
+     *
      * @throws ConnectionException When required config is missing or connection fails
      */
     public function __construct(array $config = [])
@@ -39,7 +40,8 @@ class PostgresDriver extends AbstractDriver
         $database = $config['database'] ?? $_ENV['DB_DATABASE'] ?? null;
         $username = $config['username'] ?? $_ENV['DB_USERNAME'] ?? null;
         $password = $config['password'] ?? $_ENV['DB_PASSWORD'] ?? null;
-        $port = $config['port'] ?? (isset($_ENV['DB_PORT']) ? (int)$_ENV['DB_PORT'] : 5432);
+        $envPort = $_ENV['DB_PORT'] ?? null;
+        $port = $config['port'] ?? (is_numeric($envPort) ? (int)$envPort : 5432);
 
         if ($host === null || $database === null || $username === null) {
             throw new ConnectionException(
@@ -47,6 +49,12 @@ class PostgresDriver extends AbstractDriver
                 debugMessage: 'Missing required config: host, database, or username'
             );
         }
+
+        // Type assertions after null check
+        $host = (string)$host;
+        $database = (string)$database;
+        $username = (string)$username;
+        $password = $password !== null ? (string)$password : null;
 
         $dsn = sprintf(
             'pgsql:host=%s;port=%d;dbname=%s',

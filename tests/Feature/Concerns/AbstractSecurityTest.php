@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Feature\Concerns;
 
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\DatabaseInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Abstract base class for security tests.
@@ -117,7 +117,7 @@ abstract class AbstractSecurityTest extends TestCase
 
     public function testSqlInjectionInWhereIn(): void
     {
-        $maliciousValues = ["999", "2) OR 1=1; --"];
+        $maliciousValues = ['999', '2) OR 1=1; --'];
 
         try {
             $result = $this->db->table('users')
@@ -137,8 +137,8 @@ abstract class AbstractSecurityTest extends TestCase
 
     public function testSqlInjectionInWhereBetween(): void
     {
-        $maliciousStart = "1; DROP TABLE secrets; --";
-        $maliciousEnd = "100";
+        $maliciousStart = '1; DROP TABLE secrets; --';
+        $maliciousEnd = '100';
 
         try {
             $result = $this->db->table('users')
@@ -173,7 +173,7 @@ abstract class AbstractSecurityTest extends TestCase
 
     public function testSqlInjectionInDirectQuery(): void
     {
-        $maliciousId = "1 OR 1=1";
+        $maliciousId = '1 OR 1=1';
 
         try {
             // Using parameterized query
@@ -253,18 +253,18 @@ abstract class AbstractSecurityTest extends TestCase
         $specialNames = [
             "O'Brien",
             'Quote "Test"',
-            "Back\\slash",
+            'Back\\slash',
             "New\nLine",
             "Tab\tHere",
             "<script>alert('xss')</script>",
-            "emoji 🎉 test",
+            'emoji 🎉 test',
         ];
 
         foreach ($specialNames as $name) {
             $this->db->insert('users', ['name' => $name, 'email' => 'test@example.com']);
 
             $user = $this->db->table('users')->where('name', $name)->first();
-            $this->assertNotNull($user, "Failed to find user with name: " . addslashes($name));
+            $this->assertNotNull($user, 'Failed to find user with name: ' . addslashes($name));
             $this->assertSame($name, $user['name']);
         }
     }

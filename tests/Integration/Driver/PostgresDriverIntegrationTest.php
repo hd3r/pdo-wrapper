@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Integration\Driver;
 
-use PDO;
-use PDOStatement;
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Driver\PostgresDriver;
 use Hd3r\PdoWrapper\Exception\ConnectionException;
 use Hd3r\PdoWrapper\Exception\QueryException;
+use PDO;
+use PDOStatement;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @group postgres
@@ -57,7 +57,7 @@ class PostgresDriverIntegrationTest extends TestCase
     {
         $this->driver->execute('CREATE TEMPORARY TABLE test_pg (id SERIAL PRIMARY KEY, name TEXT)');
 
-        $affected = $this->driver->execute("INSERT INTO test_pg (name) VALUES ($1)", ['hello']);
+        $affected = $this->driver->execute('INSERT INTO test_pg (name) VALUES ($1)', ['hello']);
 
         $this->assertSame(1, $affected);
     }
@@ -65,7 +65,7 @@ class PostgresDriverIntegrationTest extends TestCase
     public function testLastInsertId(): void
     {
         $this->driver->execute('CREATE TEMPORARY TABLE test_pg2 (id SERIAL PRIMARY KEY, name TEXT)');
-        $this->driver->execute("INSERT INTO test_pg2 (name) VALUES ($1)", ['hello']);
+        $this->driver->execute('INSERT INTO test_pg2 (name) VALUES ($1)', ['hello']);
 
         $id = $this->driver->lastInsertId('test_pg2_id_seq');
 

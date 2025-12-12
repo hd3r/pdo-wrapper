@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Integration\Driver;
 
+use Hd3r\PdoWrapper\DatabaseInterface;
+use Hd3r\PdoWrapper\Driver\MySqlDriver;
+use Hd3r\PdoWrapper\Exception\TransactionException;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\TestCase;
-use Hd3r\PdoWrapper\DatabaseInterface;
-use Hd3r\PdoWrapper\Driver\MySqlDriver;
-use Hd3r\PdoWrapper\Exception\ConnectionException;
-use Hd3r\PdoWrapper\Exception\TransactionException;
 
 /**
  * @group mysql
@@ -57,7 +56,7 @@ class MySqlDriverIntegrationTest extends TestCase
     {
         $this->driver->execute('CREATE TEMPORARY TABLE test_mysql (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))');
 
-        $affected = $this->driver->execute("INSERT INTO test_mysql (name) VALUES (?)", ['hello']);
+        $affected = $this->driver->execute('INSERT INTO test_mysql (name) VALUES (?)', ['hello']);
 
         $this->assertSame(1, $affected);
     }
@@ -65,7 +64,7 @@ class MySqlDriverIntegrationTest extends TestCase
     public function testLastInsertId(): void
     {
         $this->driver->execute('CREATE TEMPORARY TABLE test_mysql2 (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))');
-        $this->driver->execute("INSERT INTO test_mysql2 (name) VALUES (?)", ['hello']);
+        $this->driver->execute('INSERT INTO test_mysql2 (name) VALUES (?)', ['hello']);
 
         $id = $this->driver->lastInsertId();
 

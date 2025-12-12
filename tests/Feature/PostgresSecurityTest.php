@@ -48,7 +48,7 @@ class PostgresSecurityTest extends AbstractSecurityTest
     // PostgreSQL-specific: Test dollar quoting attempt
     public function testPostgresDollarQuotingInjection(): void
     {
-        $maliciousInput = "test$$; DROP TABLE users; $$";
+        $maliciousInput = 'test$$; DROP TABLE users; $$';
 
         $this->db->insert('users', ['name' => $maliciousInput, 'email' => 'dollar@example.com']);
 

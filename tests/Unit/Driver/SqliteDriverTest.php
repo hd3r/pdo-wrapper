@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Unit\Driver;
 
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Driver\SqliteDriver;
 use Hd3r\PdoWrapper\Exception\ConnectionException;
+use PHPUnit\Framework\TestCase;
 
 class SqliteDriverTest extends TestCase
 {

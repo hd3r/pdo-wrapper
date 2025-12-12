@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\Driver\MySqlDriver;
 use Hd3r\PdoWrapper\Driver\PostgresDriver;
 use Hd3r\PdoWrapper\Driver\SqliteDriver;
+use PHPUnit\Framework\TestCase;
 
 class DatabaseTest extends TestCase
 {

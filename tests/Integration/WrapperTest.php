@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Integration;
 
-use PDOStatement;
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Exception\QueryException;
+use PDOStatement;
+use PHPUnit\Framework\TestCase;
 
 class WrapperTest extends TestCase
 {
@@ -36,7 +36,7 @@ class WrapperTest extends TestCase
 
     public function testQueryWithParams(): void
     {
-        $this->db->execute("INSERT INTO users (name, email) VALUES (?, ?)", ['Max', 'max@example.com']);
+        $this->db->execute('INSERT INTO users (name, email) VALUES (?, ?)', ['Max', 'max@example.com']);
 
         $stmt = $this->db->query('SELECT * FROM users WHERE name = ?', ['Max']);
         $result = $stmt->fetch();
@@ -47,14 +47,14 @@ class WrapperTest extends TestCase
 
     public function testExecuteReturnsAffectedRows(): void
     {
-        $affected = $this->db->execute("INSERT INTO users (name, email) VALUES (?, ?)", ['Max', 'max@example.com']);
+        $affected = $this->db->execute('INSERT INTO users (name, email) VALUES (?, ?)', ['Max', 'max@example.com']);
 
         $this->assertSame(1, $affected);
     }
 
     public function testLastInsertId(): void
     {
-        $this->db->execute("INSERT INTO users (name, email) VALUES (?, ?)", ['Max', 'max@example.com']);
+        $this->db->execute('INSERT INTO users (name, email) VALUES (?, ?)', ['Max', 'max@example.com']);
 
         $id = $this->db->lastInsertId();
 

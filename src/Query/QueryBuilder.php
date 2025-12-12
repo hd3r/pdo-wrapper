@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Query;
 
-use PDO;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Exception\QueryException;
+use PDO;
 
 /**
  * Fluent query builder for constructing SQL queries.
@@ -29,14 +29,27 @@ class QueryBuilder
     private string $table;
     private string $quoteChar;
 
+    /** @var array<int, string|RawExpression> */
     private array $columns = ['*'];
+
+    /** @var array<int, array<string, mixed>> */
     private array $wheres = [];
+
+    /** @var array<int, array<string, string>> */
     private array $joins = [];
+
+    /** @var array<int, array{column: string, direction: string}> */
     private array $orderBy = [];
+
     private ?int $limit = null;
     private ?int $offset = null;
+
+    /** @var array<int, string> */
     private array $groupBy = [];
+
+    /** @var array<int, array{column: string|RawExpression, operator: string, value: mixed}> */
     private array $having = [];
+
     private bool $distinct = false;
 
     /**
@@ -70,8 +83,7 @@ class QueryBuilder
      * For aggregate functions or raw SQL expressions, use Database::raw():
      * - select([Database::raw('COUNT(*)'), Database::raw('AVG(price)')])
      *
-     * @param string|array<string|RawExpression> $columns Column(s) to select
-     * @return self
+     * @param string|array<int, string|RawExpression> $columns Column(s) to select
      */
     public function select(string|array $columns = '*'): self
     {
@@ -88,8 +100,6 @@ class QueryBuilder
 
     /**
      * Add DISTINCT to the query.
-     *
-     * @return self
      */
     public function distinct(): self
     {
@@ -110,10 +120,10 @@ class QueryBuilder
      * - where('age', '>', 18)    → age > 18
      * - where(['active' => 1])   → active = 1
      *
-     * @param string|array $column Column name or array of conditions
+     * @param string|array<string, mixed> $column Column name or array of conditions
      * @param mixed $operatorOrValue Operator or value (if 2 args)
      * @param mixed $value Value (if 3 args)
-     * @return self
+     *
      * @throws QueryException When called with only column name (missing value)
      */
     public function where(string|array $column, mixed $operatorOrValue = null, mixed $value = null): self
@@ -143,7 +153,7 @@ class QueryBuilder
         $this->wheres[] = [
             'type' => 'basic',
             'column' => $column,
-            'operator' => $this->validateOperator($operatorOrValue),
+            'operator' => $this->validateOperator((string)$operatorOrValue),
             'value' => $value,
         ];
 
@@ -154,8 +164,8 @@ class QueryBuilder
      * Add a WHERE IN condition.
      *
      * @param string $column Column name
-     * @param array $values Values to match
-     * @return self
+     * @param array<int, mixed> $values Values to match
+     *
      * @throws QueryException When $values is empty
      */
     public function whereIn(string $column, array $values): self
@@ -181,8 +191,8 @@ class QueryBuilder
      * Add a WHERE NOT IN condition.
      *
      * @param string $column Column name
-     * @param array $values Values to exclude
-     * @return self
+     * @param array<int, mixed> $values Values to exclude
+     *
      * @throws QueryException When $values is empty
      */
     public function whereNotIn(string $column, array $values): self
@@ -208,8 +218,8 @@ class QueryBuilder
      * Add a WHERE BETWEEN condition.
      *
      * @param string $column Column name
-     * @param array $values [min, max] values
-     * @return self
+     * @param array<int, mixed> $values [min, max] values
+     *
      * @throws QueryException When $values doesn't have exactly 2 elements
      */
     public function whereBetween(string $column, array $values): self
@@ -235,8 +245,8 @@ class QueryBuilder
      * Add a WHERE NOT BETWEEN condition.
      *
      * @param string $column Column name
-     * @param array $values [min, max] values to exclude
-     * @return self
+     * @param array<int, mixed> $values [min, max] values to exclude
+     *
      * @throws QueryException When $values doesn't have exactly 2 elements
      */
     public function whereNotBetween(string $column, array $values): self
@@ -262,7 +272,6 @@ class QueryBuilder
      * Add a WHERE IS NULL condition.
      *
      * @param string $column Column name
-     * @return self
      */
     public function whereNull(string $column): self
     {
@@ -279,7 +288,6 @@ class QueryBuilder
      * Add a WHERE IS NOT NULL condition.
      *
      * @param string $column Column name
-     * @return self
      */
     public function whereNotNull(string $column): self
     {
@@ -297,7 +305,6 @@ class QueryBuilder
      *
      * @param string $column Column name
      * @param string $pattern LIKE pattern (use % for wildcards)
-     * @return self
      */
     public function whereLike(string $column, string $pattern): self
     {
@@ -316,7 +323,6 @@ class QueryBuilder
      *
      * @param string $column Column name
      * @param string $pattern LIKE pattern to exclude
-     * @return self
      */
     public function whereNotLike(string $column, string $pattern): self
     {
@@ -341,7 +347,6 @@ class QueryBuilder
      * @param string $first First column (left side)
      * @param string $operator Comparison operator (=, <, >, etc.)
      * @param string $second Second column (right side)
-     * @return self
      */
     public function join(string $table, string $first, string $operator, string $second): self
     {
@@ -363,7 +368,6 @@ class QueryBuilder
      * @param string $first First column (left side)
      * @param string $operator Comparison operator
      * @param string $second Second column (right side)
-     * @return self
      */
     public function leftJoin(string $table, string $first, string $operator, string $second): self
     {
@@ -385,7 +389,6 @@ class QueryBuilder
      * @param string $first First column (left side)
      * @param string $operator Comparison operator
      * @param string $second Second column (right side)
-     * @return self
      */
     public function rightJoin(string $table, string $first, string $operator, string $second): self
     {
@@ -409,7 +412,6 @@ class QueryBuilder
      *
      * @param string $column Column to order by
      * @param string $direction ASC or DESC (default: ASC)
-     * @return self
      */
     public function orderBy(string $column, string $direction = 'ASC'): self
     {
@@ -430,7 +432,6 @@ class QueryBuilder
      * Set the LIMIT clause.
      *
      * @param int $limit Maximum number of rows
-     * @return self
      */
     public function limit(int $limit): self
     {
@@ -442,7 +443,6 @@ class QueryBuilder
      * Set the OFFSET clause.
      *
      * @param int $offset Number of rows to skip
-     * @return self
      */
     public function offset(int $offset): self
     {
@@ -457,8 +457,7 @@ class QueryBuilder
     /**
      * Add a GROUP BY clause.
      *
-     * @param string|array $columns Column(s) to group by
-     * @return self
+     * @param string|array<int, string> $columns Column(s) to group by
      */
     public function groupBy(string|array $columns): self
     {
@@ -479,7 +478,6 @@ class QueryBuilder
      * @param string|RawExpression $column Column or aggregate function (use Database::raw() for aggregates)
      * @param string $operator Comparison operator
      * @param mixed $value Value to compare
-     * @return self
      */
     public function having(string|RawExpression $column, string $operator, mixed $value): self
     {
@@ -499,8 +497,9 @@ class QueryBuilder
     /**
      * Execute the query and get all results.
      *
-     * @return array Array of rows as associative arrays
      * @throws QueryException On query failure
+     *
+     * @return array<int, array<string, mixed>> Array of rows as associative arrays
      */
     public function get(): array
     {
@@ -513,8 +512,9 @@ class QueryBuilder
     /**
      * Execute the query and get the first result.
      *
-     * @return array|null First row or null if none found
      * @throws QueryException On query failure
+     *
+     * @return array<string, mixed>|null First row or null if none found
      */
     public function first(): ?array
     {
@@ -538,41 +538,46 @@ class QueryBuilder
      * Get the count of matching records.
      *
      * @param string $column Column to count (default: *)
+     *
      * @return int Number of records
      */
     public function count(string $column = '*'): int
     {
-        return (int)$this->aggregate('COUNT', $column);
+        $result = $this->aggregate('COUNT', $column);
+        return is_numeric($result) ? (int)$result : 0;
     }
 
     /**
      * Get the sum of a column.
      *
      * @param string $column Column to sum
+     *
      * @return float|int|null Sum or null if no rows
      */
     public function sum(string $column): float|int|null
     {
         $result = $this->aggregate('SUM', $column);
-        return $result !== null ? (float)$result : null;
+        return is_numeric($result) ? (float)$result : null;
     }
 
     /**
      * Get the average of a column.
      *
      * @param string $column Column to average
+     *
      * @return float|int|null Average or null if no rows
      */
     public function avg(string $column): float|int|null
     {
         $result = $this->aggregate('AVG', $column);
-        return $result !== null ? (float)$result : null;
+        return is_numeric($result) ? (float)$result : null;
     }
 
     /**
      * Get the minimum value of a column.
      *
      * @param string $column Column to check
+     *
      * @return mixed Minimum value or null if no rows
      */
     public function min(string $column): mixed
@@ -584,6 +589,7 @@ class QueryBuilder
      * Get the maximum value of a column.
      *
      * @param string $column Column to check
+     *
      * @return mixed Maximum value or null if no rows
      */
     public function max(string $column): mixed
@@ -596,6 +602,7 @@ class QueryBuilder
      *
      * @param string $function Aggregate function (COUNT, SUM, AVG, MIN, MAX)
      * @param string $column Column to aggregate
+     *
      * @return mixed Aggregate result or null
      */
     private function aggregate(string $function, string $column): mixed
@@ -615,11 +622,16 @@ class QueryBuilder
 
         [$sql, $params] = $this->toSql();
         $stmt = $this->db->query($sql, $params);
+        /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $this->columns = $originalColumns;
         $this->limit = $originalLimit;
         $this->offset = $originalOffset;
+
+        if ($result === false) {
+            return null;
+        }
 
         return $result['aggregate'] ?? null;
     }
@@ -631,9 +643,11 @@ class QueryBuilder
     /**
      * Insert a row via the query builder.
      *
-     * @param array $data Column => value pairs
-     * @return int|string Last insert ID
+     * @param array<string, mixed> $data Column => value pairs
+     *
      * @throws QueryException On failure
+     *
+     * @return int|string Last insert ID
      */
     public function insert(array $data): int|string
     {
@@ -645,9 +659,11 @@ class QueryBuilder
      *
      * Requires at least one WHERE condition for safety.
      *
-     * @param array $data Column => value pairs to update
-     * @return int Number of affected rows
+     * @param array<string, mixed> $data Column => value pairs to update
+     *
      * @throws QueryException When no WHERE conditions set (safety)
+     *
+     * @return int Number of affected rows
      */
     public function update(array $data): int
     {
@@ -685,8 +701,9 @@ class QueryBuilder
      *
      * Requires at least one WHERE condition for safety.
      *
-     * @return int Number of affected rows
      * @throws QueryException When no WHERE conditions set (safety)
+     *
+     * @return int Number of affected rows
      */
     public function delete(): int
     {
@@ -717,7 +734,7 @@ class QueryBuilder
      *
      * Useful for debugging or logging.
      *
-     * @return array [sql, params]
+     * @return array{0: string, 1: array<int, mixed>} [sql, params]
      */
     public function toSql(): array
     {
@@ -736,11 +753,12 @@ class QueryBuilder
      * Parameters are collected in SQL clause order:
      * WHERE params first, then HAVING params.
      *
-     * @return array [sql, params]
+     * @return array{0: string, 1: array<int, mixed>} [sql, params]
      */
     private function buildSelect(): array
     {
         $sql = 'SELECT ';
+        /** @var array<int, mixed> $params */
         $params = [];
 
         if ($this->distinct) {
@@ -811,12 +829,12 @@ class QueryBuilder
 
         // LIMIT (cast to int for security)
         if ($this->limit !== null) {
-            $sql .= ' LIMIT ' . (int)$this->limit;
+            $sql .= ' LIMIT ' . $this->limit;
         }
 
         // OFFSET (cast to int for security)
         if ($this->offset !== null) {
-            $sql .= ' OFFSET ' . (int)$this->offset;
+            $sql .= ' OFFSET ' . $this->offset;
         }
 
         return [$sql, $params];
@@ -825,37 +843,46 @@ class QueryBuilder
     /**
      * Build WHERE clause and extract params.
      *
-     * @return array [sql, params]
+     * @return array{0: string, 1: array<int, mixed>} [sql, params]
      */
     private function buildWhere(): array
     {
         $clauses = [];
+        /** @var array<int, mixed> $params */
         $params = [];
 
         foreach ($this->wheres as $where) {
-            switch ($where['type']) {
+            $type = (string)($where['type'] ?? '');
+            $column = (string)($where['column'] ?? '');
+
+            switch ($type) {
                 case 'basic':
-                    $clauses[] = $this->quoteIdentifier($where['column']) . ' ' . $where['operator'] . ' ?';
-                    $params[] = $where['value'];
+                    $operator = (string)($where['operator'] ?? '=');
+                    $clauses[] = $this->quoteIdentifier($column) . ' ' . $operator . ' ?';
+                    $params[] = $where['value'] ?? null;
                     break;
 
                 case 'in':
-                    $placeholders = implode(', ', array_fill(0, count($where['values']), '?'));
-                    $operator = $where['not'] ? 'NOT IN' : 'IN';
-                    $clauses[] = $this->quoteIdentifier($where['column']) . " {$operator} ({$placeholders})";
-                    $params = array_merge($params, $where['values']);
+                    /** @var array<int, mixed> $values */
+                    $values = is_array($where['values'] ?? null) ? $where['values'] : [];
+                    $placeholders = implode(', ', array_fill(0, count($values), '?'));
+                    $inOperator = ($where['not'] ?? false) ? 'NOT IN' : 'IN';
+                    $clauses[] = $this->quoteIdentifier($column) . " {$inOperator} ({$placeholders})";
+                    $params = array_merge($params, $values);
                     break;
 
                 case 'between':
-                    $operator = $where['not'] ? 'NOT BETWEEN' : 'BETWEEN';
-                    $clauses[] = $this->quoteIdentifier($where['column']) . " {$operator} ? AND ?";
-                    $params[] = $where['values'][0];
-                    $params[] = $where['values'][1];
+                    $betweenOperator = ($where['not'] ?? false) ? 'NOT BETWEEN' : 'BETWEEN';
+                    /** @var array<int, mixed> $betweenValues */
+                    $betweenValues = is_array($where['values'] ?? null) ? $where['values'] : [null, null];
+                    $clauses[] = $this->quoteIdentifier($column) . " {$betweenOperator} ? AND ?";
+                    $params[] = $betweenValues[0] ?? null;
+                    $params[] = $betweenValues[1] ?? null;
                     break;
 
                 case 'null':
-                    $operator = $where['not'] ? 'IS NOT NULL' : 'IS NULL';
-                    $clauses[] = $this->quoteIdentifier($where['column']) . ' ' . $operator;
+                    $nullOperator = ($where['not'] ?? false) ? 'IS NOT NULL' : 'IS NULL';
+                    $clauses[] = $this->quoteIdentifier($column) . ' ' . $nullOperator;
                     break;
             }
         }
@@ -868,11 +895,12 @@ class QueryBuilder
      *
      * Aggregate functions (containing parentheses) are not quoted.
      *
-     * @return array [sql, params]
+     * @return array{0: string, 1: array<int, mixed>} [sql, params]
      */
     private function buildHaving(): array
     {
         $clauses = [];
+        /** @var array<int, mixed> $params */
         $params = [];
 
         foreach ($this->having as $h) {
@@ -898,6 +926,7 @@ class QueryBuilder
      * Escapes the quote character within identifiers to prevent SQL injection.
      *
      * @param string $identifier Identifier to quote
+     *
      * @return string Quoted identifier
      */
     private function quoteIdentifier(string $identifier): string
@@ -914,7 +943,7 @@ class QueryBuilder
         if (str_contains($identifier, '.')) {
             $parts = explode('.', $identifier);
             return implode('.', array_map(
-                fn($p) => $this->quoteChar . str_replace($this->quoteChar, $escape, $p) . $this->quoteChar,
+                fn ($p) => $this->quoteChar . str_replace($this->quoteChar, $escape, $p) . $this->quoteChar,
                 $parts
             ));
         }
@@ -926,8 +955,10 @@ class QueryBuilder
      * Validate that an operator is in the allowed whitelist.
      *
      * @param string $operator Operator to validate
-     * @return string Validated and normalized operator
+     *
      * @throws QueryException When operator is not allowed
+     *
+     * @return string Validated and normalized operator
      */
     private function validateOperator(string $operator): string
     {

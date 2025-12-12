@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Integration\Driver;
 
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\Driver\PostgresDriver;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @group postgres

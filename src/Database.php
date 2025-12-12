@@ -22,8 +22,8 @@ class Database
     /**
      * Create a MySQL database connection.
      *
-     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, charset?: string, options?: array} $config
-     * @return MySqlDriver
+     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, charset?: string, options?: array<int, mixed>} $config
+     *
      * @throws Exception\ConnectionException When connection fails
      */
     public static function mysql(array $config = []): MySqlDriver
@@ -34,8 +34,8 @@ class Database
     /**
      * Create a PostgreSQL database connection.
      *
-     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, options?: array} $config
-     * @return PostgresDriver
+     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, options?: array<int, mixed>} $config
+     *
      * @throws Exception\ConnectionException When connection fails
      */
     public static function postgres(array $config = []): PostgresDriver
@@ -47,7 +47,7 @@ class Database
      * Create a SQLite database connection.
      *
      * @param string|null $path Path to SQLite file, ':memory:' for in-memory, or null for default
-     * @return SqliteDriver
+     *
      * @throws Exception\ConnectionException When connection fails
      */
     public static function sqlite(?string $path = null): SqliteDriver
@@ -65,7 +65,6 @@ class Database
      * This bypasses SQL injection protection for identifiers.
      *
      * @param string $value The raw SQL string
-     * @return RawExpression
      *
      * @example
      * $db->table('users')->select([Database::raw('COUNT(*) as total')])->get();

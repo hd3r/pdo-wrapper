@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Driver;
 
+use Hd3r\PdoWrapper\Exception\ConnectionException;
 use PDO;
 use PDOException;
-use Hd3r\PdoWrapper\Exception\ConnectionException;
 
 /**
  * SQLite database driver.
@@ -21,11 +21,13 @@ class SqliteDriver extends AbstractDriver
      *
      * @param string|null $path Path to SQLite file, ':memory:' for in-memory, or null
      *                          Falls back to DB_SQLITE_PATH env var, then ':memory:'
+     *
      * @throws ConnectionException When connection fails
      */
     public function __construct(?string $path = null)
     {
-        $path = $path ?? $_ENV['DB_SQLITE_PATH'] ?? ':memory:';
+        $envPath = $_ENV['DB_SQLITE_PATH'] ?? null;
+        $path = $path ?? ($envPath !== null ? (string)$envPath : ':memory:');
 
         $dsn = sprintf('sqlite:%s', $path);
 

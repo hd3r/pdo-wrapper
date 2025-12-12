@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Integration\Driver;
 
-use PDO;
-use PDOStatement;
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Driver\SqliteDriver;
 use Hd3r\PdoWrapper\Exception\ConnectionException;
 use Hd3r\PdoWrapper\Exception\QueryException;
+use PDO;
+use PDOStatement;
+use PHPUnit\Framework\TestCase;
 
 class SqliteDriverIntegrationTest extends TestCase
 {
@@ -50,7 +50,7 @@ class SqliteDriverIntegrationTest extends TestCase
         $driver = new SqliteDriver();
         $driver->execute('CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)');
 
-        $affected = $driver->execute("INSERT INTO test (name) VALUES (?)", ['hello']);
+        $affected = $driver->execute('INSERT INTO test (name) VALUES (?)', ['hello']);
 
         $this->assertSame(1, $affected);
     }
@@ -59,7 +59,7 @@ class SqliteDriverIntegrationTest extends TestCase
     {
         $driver = new SqliteDriver();
         $driver->execute('CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)');
-        $driver->execute("INSERT INTO test (name) VALUES (?)", ['hello']);
+        $driver->execute('INSERT INTO test (name) VALUES (?)', ['hello']);
 
         $id = $driver->lastInsertId();
 

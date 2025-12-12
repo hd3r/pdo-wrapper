@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Hd3r\PdoWrapper\Tests\Integration;
 
 use Exception;
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Exception\QueryException;
-use Hd3r\PdoWrapper\Exception\TransactionException;
+use PHPUnit\Framework\TestCase;
 
 class TransactionTest extends TestCase
 {
@@ -24,7 +23,7 @@ class TransactionTest extends TestCase
     public function testManualTransactionCommit(): void
     {
         $this->db->beginTransaction();
-        $this->db->execute("INSERT INTO users (name) VALUES (?)", ['Max']);
+        $this->db->execute('INSERT INTO users (name) VALUES (?)', ['Max']);
         $this->db->commit();
 
         $stmt = $this->db->query('SELECT * FROM users');
@@ -37,7 +36,7 @@ class TransactionTest extends TestCase
     public function testManualTransactionRollback(): void
     {
         $this->db->beginTransaction();
-        $this->db->execute("INSERT INTO users (name) VALUES (?)", ['Max']);
+        $this->db->execute('INSERT INTO users (name) VALUES (?)', ['Max']);
         $this->db->rollback();
 
         $stmt = $this->db->query('SELECT * FROM users');
@@ -49,8 +48,8 @@ class TransactionTest extends TestCase
     public function testTransactionCallbackCommitsOnSuccess(): void
     {
         $result = $this->db->transaction(function (DatabaseInterface $db) {
-            $db->execute("INSERT INTO users (name) VALUES (?)", ['Max']);
-            $db->execute("INSERT INTO users (name) VALUES (?)", ['Anna']);
+            $db->execute('INSERT INTO users (name) VALUES (?)', ['Max']);
+            $db->execute('INSERT INTO users (name) VALUES (?)', ['Anna']);
             return 'success';
         });
 
@@ -66,7 +65,7 @@ class TransactionTest extends TestCase
     {
         try {
             $this->db->transaction(function (DatabaseInterface $db) {
-                $db->execute("INSERT INTO users (name) VALUES (?)", ['Max']);
+                $db->execute('INSERT INTO users (name) VALUES (?)', ['Max']);
                 throw new Exception('Something went wrong');
             });
         } catch (Exception $e) {
@@ -92,7 +91,7 @@ class TransactionTest extends TestCase
         });
 
         $this->db->transaction(function (DatabaseInterface $db) {
-            $db->execute("INSERT INTO users (name) VALUES (?)", ['Max']);
+            $db->execute('INSERT INTO users (name) VALUES (?)', ['Max']);
         });
 
         $this->assertSame(['begin', 'commit'], $events);

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\Driver\SqliteDriver;
 use Hd3r\PdoWrapper\Exception\QueryException;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Edge case tests for bugs found by code review.
@@ -262,7 +262,7 @@ class EdgeCaseTest extends TestCase
     public function testInsertThrowsExceptionWhenLastInsertIdReturnsFalse(): void
     {
         // Create a driver that returns false from lastInsertId()
-        $driver = new class extends SqliteDriver {
+        $driver = new class () extends SqliteDriver {
             public function __construct()
             {
                 parent::__construct(':memory:');
@@ -285,7 +285,7 @@ class EdgeCaseTest extends TestCase
     public function testInsertThrowsExceptionWithDebugMessageContainingSqlAndParams(): void
     {
         // Create a driver that returns false from lastInsertId()
-        $driver = new class extends SqliteDriver {
+        $driver = new class () extends SqliteDriver {
             public function __construct()
             {
                 parent::__construct(':memory:');

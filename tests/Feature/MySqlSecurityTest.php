@@ -48,7 +48,7 @@ class MySqlSecurityTest extends AbstractSecurityTest
     // MySQL-specific: Test backslash escaping (MySQL uses backslash as escape)
     public function testMySqlBackslashEscaping(): void
     {
-        $nameWithBackslash = "Test\\Name";
+        $nameWithBackslash = 'Test\\Name';
         $this->db->insert('users', ['name' => $nameWithBackslash, 'email' => 'backslash@example.com']);
 
         $user = $this->db->table('users')->where('name', $nameWithBackslash)->first();

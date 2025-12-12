@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Unit\Traits;
 
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Traits\HasHooks;
+use PHPUnit\Framework\TestCase;
 
 class HasHooksTest extends TestCase
 {
@@ -13,7 +13,7 @@ class HasHooksTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->subject = new class {
+        $this->subject = new class () {
             use HasHooks;
 
             public function fireEvent(string $event, array $data): void

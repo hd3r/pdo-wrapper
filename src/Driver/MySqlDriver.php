@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Driver;
 
+use Hd3r\PdoWrapper\Exception\ConnectionException;
 use PDO;
 use PDOException;
-use Hd3r\PdoWrapper\Exception\ConnectionException;
 
 /**
  * MySQL database driver.
@@ -31,7 +31,8 @@ class MySqlDriver extends AbstractDriver
      * Falls back to environment variables: DB_HOST, DB_DATABASE,
      * DB_USERNAME, DB_PASSWORD, DB_PORT
      *
-     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, charset?: string, options?: array} $config
+     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, charset?: string, options?: array<int, mixed>} $config
+     *
      * @throws ConnectionException When required config is missing or connection fails
      */
     public function __construct(array $config = [])
@@ -40,7 +41,8 @@ class MySqlDriver extends AbstractDriver
         $database = $config['database'] ?? $_ENV['DB_DATABASE'] ?? null;
         $username = $config['username'] ?? $_ENV['DB_USERNAME'] ?? null;
         $password = $config['password'] ?? $_ENV['DB_PASSWORD'] ?? null;
-        $port = $config['port'] ?? (isset($_ENV['DB_PORT']) ? (int)$_ENV['DB_PORT'] : 3306);
+        $envPort = $_ENV['DB_PORT'] ?? null;
+        $port = $config['port'] ?? (is_numeric($envPort) ? (int)$envPort : 3306);
         $charset = $config['charset'] ?? 'utf8mb4';
 
         if ($host === null || $database === null || $username === null) {
@@ -49,6 +51,12 @@ class MySqlDriver extends AbstractDriver
                 debugMessage: 'Missing required config: host, database, or username'
             );
         }
+
+        // Type assertions after null check
+        $host = (string)$host;
+        $database = (string)$database;
+        $username = (string)$username;
+        $password = $password !== null ? (string)$password : null;
 
         $dsn = sprintf(
             'mysql:host=%s;port=%d;dbname=%s;charset=%s',
@@ -86,6 +94,7 @@ class MySqlDriver extends AbstractDriver
      * - `mydb.users` → `mydb`.`users`
      *
      * @param string $identifier Identifier to quote
+     *
      * @return string Quoted identifier
      */
     protected function quoteIdentifier(string $identifier): string
@@ -94,7 +103,7 @@ class MySqlDriver extends AbstractDriver
         if (str_contains($identifier, '.')) {
             $parts = explode('.', $identifier);
             return implode('.', array_map(
-                fn($part) => '`' . str_replace('`', '``', $part) . '`',
+                fn ($part) => '`' . str_replace('`', '``', $part) . '`',
                 $parts
             ));
         }
@@ -104,8 +113,6 @@ class MySqlDriver extends AbstractDriver
 
     /**
      * Get the MySQL quote character (backtick).
-     *
-     * @return string
      */
     protected function getQuoteChar(): string
     {

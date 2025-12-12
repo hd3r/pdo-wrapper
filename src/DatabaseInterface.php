@@ -14,8 +14,8 @@ interface DatabaseInterface
      * Execute a SQL query and return the statement.
      *
      * @param string $sql SQL query with placeholders
-     * @param array $params Parameters to bind
-     * @return PDOStatement
+     * @param array<int|string, mixed> $params Parameters to bind
+     *
      * @throws Exception\QueryException
      */
     public function query(string $sql, array $params = []): PDOStatement;
@@ -24,9 +24,11 @@ interface DatabaseInterface
      * Execute a SQL statement and return affected rows.
      *
      * @param string $sql SQL statement with placeholders
-     * @param array $params Parameters to bind
-     * @return int Number of affected rows
+     * @param array<int|string, mixed> $params Parameters to bind
+     *
      * @throws Exception\QueryException
+     *
+     * @return int Number of affected rows
      */
     public function execute(string $sql, array $params = []): int;
 
@@ -34,14 +36,13 @@ interface DatabaseInterface
      * Get the last inserted ID.
      *
      * @param string|null $name Sequence name (PostgreSQL) or null
+     *
      * @return string|false Last insert ID or false on failure
      */
     public function lastInsertId(?string $name = null): string|false;
 
     /**
      * Get the underlying PDO instance.
-     *
-     * @return PDO
      */
     public function getPdo(): PDO;
 
@@ -71,8 +72,10 @@ interface DatabaseInterface
      * Auto-commits on success, auto-rollback on exception.
      *
      * @param Closure $callback Receives the driver instance
-     * @return mixed Return value of the callback
+     *
      * @throws \Throwable Re-throws any exception after rollback
+     *
+     * @return mixed Return value of the callback
      */
     public function transaction(Closure $callback): mixed;
 
@@ -94,9 +97,11 @@ interface DatabaseInterface
      * Insert a row and return the last insert ID.
      *
      * @param string $table Table name
-     * @param array $data Column => value pairs
-     * @return int|string Last insert ID
+     * @param array<string, mixed> $data Column => value pairs
+     *
      * @throws Exception\QueryException
+     *
+     * @return int|string Last insert ID
      */
     public function insert(string $table, array $data): int|string;
 
@@ -104,10 +109,12 @@ interface DatabaseInterface
      * Update rows matching WHERE conditions.
      *
      * @param string $table Table name
-     * @param array $data Column => value pairs to update
-     * @param array $where WHERE conditions (column => value)
-     * @return int Number of affected rows
+     * @param array<string, mixed> $data Column => value pairs to update
+     * @param array<string, mixed> $where WHERE conditions (column => value)
+     *
      * @throws Exception\QueryException When $where is empty (safety)
+     *
+     * @return int Number of affected rows
      */
     public function update(string $table, array $data, array $where): int;
 
@@ -115,9 +122,11 @@ interface DatabaseInterface
      * Delete rows matching WHERE conditions.
      *
      * @param string $table Table name
-     * @param array $where WHERE conditions (column => value)
-     * @return int Number of affected rows
+     * @param array<string, mixed> $where WHERE conditions (column => value)
+     *
      * @throws Exception\QueryException When $where is empty (safety)
+     *
+     * @return int Number of affected rows
      */
     public function delete(string $table, array $where): int;
 
@@ -125,9 +134,11 @@ interface DatabaseInterface
      * Find a single row by WHERE conditions.
      *
      * @param string $table Table name
-     * @param array $where WHERE conditions (column => value)
-     * @return array|null Row as associative array or null
+     * @param array<string, mixed> $where WHERE conditions (column => value)
+     *
      * @throws Exception\QueryException
+     *
+     * @return array<string, mixed>|null Row as associative array or null
      */
     public function findOne(string $table, array $where): ?array;
 
@@ -135,9 +146,11 @@ interface DatabaseInterface
      * Find all rows matching WHERE conditions.
      *
      * @param string $table Table name
-     * @param array $where WHERE conditions (optional)
-     * @return array Array of rows
+     * @param array<string, mixed> $where WHERE conditions (optional)
+     *
      * @throws Exception\QueryException
+     *
+     * @return array<int, array<string, mixed>> Array of rows
      */
     public function findAll(string $table, array $where = []): array;
 
@@ -145,10 +158,12 @@ interface DatabaseInterface
      * Update multiple rows by their key column.
      *
      * @param string $table Table name
-     * @param array $rows Array of rows with key column
+     * @param array<int, array<string, mixed>> $rows Array of rows with key column
      * @param string $keyColumn Column to match rows (default: 'id')
-     * @return int Number of affected rows
+     *
      * @throws Exception\QueryException
+     *
+     * @return int Number of affected rows
      */
     public function updateMultiple(string $table, array $rows, string $keyColumn = 'id'): int;
 
@@ -160,7 +175,6 @@ interface DatabaseInterface
      * Create a query builder for the given table.
      *
      * @param string $table Table name
-     * @return Query\QueryBuilder
      */
     public function table(string $table): Query\QueryBuilder;
 }

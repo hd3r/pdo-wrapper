@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Hd3r\PdoWrapper\Driver;
 
 use Closure;
-use PDO;
-use PDOException;
-use PDOStatement;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Exception\QueryException;
 use Hd3r\PdoWrapper\Exception\TransactionException;
 use Hd3r\PdoWrapper\Traits\HasHooks;
+use PDO;
+use PDOException;
+use PDOStatement;
 use Throwable;
 
 /**
@@ -36,9 +36,11 @@ abstract class AbstractDriver implements DatabaseInterface
      * Triggers 'query' hook on success, 'error' hook on failure.
      *
      * @param string $sql SQL query with placeholders
-     * @param array $params Parameters to bind
-     * @return PDOStatement Executed statement
+     * @param array<int|string, mixed> $params Parameters to bind
+     *
      * @throws QueryException On query failure
+     *
+     * @return PDOStatement Executed statement
      */
     public function query(string $sql, array $params = []): PDOStatement
     {
@@ -77,9 +79,11 @@ abstract class AbstractDriver implements DatabaseInterface
      * Execute a SQL statement and return affected rows.
      *
      * @param string $sql SQL statement with placeholders
-     * @param array $params Parameters to bind
-     * @return int Number of affected rows
+     * @param array<int|string, mixed> $params Parameters to bind
+     *
      * @throws QueryException On query failure
+     *
+     * @return int Number of affected rows
      */
     public function execute(string $sql, array $params = []): int
     {
@@ -90,6 +94,7 @@ abstract class AbstractDriver implements DatabaseInterface
      * Get the last inserted ID.
      *
      * @param string|null $name Sequence name (PostgreSQL) or null
+     *
      * @return string|false Last insert ID or false on failure
      */
     public function lastInsertId(?string $name = null): string|false
@@ -108,8 +113,6 @@ abstract class AbstractDriver implements DatabaseInterface
 
     /**
      * Get the underlying PDO instance.
-     *
-     * @return PDO
      */
     public function getPdo(): PDO
     {
@@ -192,8 +195,10 @@ abstract class AbstractDriver implements DatabaseInterface
      * Auto-commits on success, auto-rollback on exception.
      *
      * @param Closure $callback Receives the driver instance
-     * @return mixed Return value of the callback
+     *
      * @throws Throwable Re-throws any exception after rollback
+     *
+     * @return mixed Return value of the callback
      */
     public function transaction(Closure $callback): mixed
     {
@@ -217,9 +222,11 @@ abstract class AbstractDriver implements DatabaseInterface
      * Insert a row and return the last insert ID.
      *
      * @param string $table Table name (supports schema.table format)
-     * @param array $data Column => value pairs
-     * @return int|string Last insert ID
+     * @param array<string, mixed> $data Column => value pairs
+     *
      * @throws QueryException When $data is empty or query fails
+     *
+     * @return int|string Last insert ID
      */
     public function insert(string $table, array $data): int|string
     {
@@ -258,10 +265,12 @@ abstract class AbstractDriver implements DatabaseInterface
      * Update rows matching WHERE conditions.
      *
      * @param string $table Table name (supports schema.table format)
-     * @param array $data Column => value pairs to update
-     * @param array $where WHERE conditions (column => value)
-     * @return int Number of affected rows
+     * @param array<string, mixed> $data Column => value pairs to update
+     * @param array<string, mixed> $where WHERE conditions (column => value)
+     *
      * @throws QueryException When $data or $where is empty (safety)
+     *
+     * @return int Number of affected rows
      */
     public function update(string $table, array $data, array $where): int
     {
@@ -304,9 +313,11 @@ abstract class AbstractDriver implements DatabaseInterface
      * Delete rows matching WHERE conditions.
      *
      * @param string $table Table name (supports schema.table format)
-     * @param array $where WHERE conditions (column => value)
-     * @return int Number of affected rows
+     * @param array<string, mixed> $where WHERE conditions (column => value)
+     *
      * @throws QueryException When $where is empty (safety)
+     *
+     * @return int Number of affected rows
      */
     public function delete(string $table, array $where): int
     {
@@ -332,9 +343,11 @@ abstract class AbstractDriver implements DatabaseInterface
      * Find a single row by WHERE conditions.
      *
      * @param string $table Table name (supports schema.table format)
-     * @param array $where WHERE conditions (column => value)
-     * @return array|null Row as associative array or null if not found
+     * @param array<string, mixed> $where WHERE conditions (column => value)
+     *
      * @throws QueryException When $where is empty
+     *
+     * @return array<string, mixed>|null Row as associative array or null if not found
      */
     public function findOne(string $table, array $where): ?array
     {
@@ -354,18 +367,21 @@ abstract class AbstractDriver implements DatabaseInterface
         );
 
         $stmt = $this->query($sql, $params);
+        /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $result ?: null;
+        return $result !== false ? $result : null;
     }
 
     /**
      * Find all rows matching WHERE conditions.
      *
      * @param string $table Table name (supports schema.table format)
-     * @param array $where WHERE conditions (optional, empty = all rows)
-     * @return array Array of rows as associative arrays
+     * @param array<string, mixed> $where WHERE conditions (optional, empty = all rows)
+     *
      * @throws QueryException On query failure
+     *
+     * @return array<int, array<string, mixed>> Array of rows as associative arrays
      */
     public function findAll(string $table, array $where = []): array
     {
@@ -392,10 +408,12 @@ abstract class AbstractDriver implements DatabaseInterface
      * Each row must contain the key column for matching.
      *
      * @param string $table Table name (supports schema.table format)
-     * @param array $rows Array of rows, each with key column
+     * @param array<int, array<string, mixed>> $rows Array of rows, each with key column
      * @param string $keyColumn Column to match rows (default: 'id')
-     * @return int Total number of affected rows
+     *
      * @throws QueryException When a row is missing the key column
+     *
+     * @return int Total number of affected rows
      */
     public function updateMultiple(string $table, array $rows, string $keyColumn = 'id'): int
     {
@@ -433,7 +451,7 @@ abstract class AbstractDriver implements DatabaseInterface
             }
 
             return $affected;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             if ($manageTransaction) {
                 $this->rollback();
             }
@@ -455,6 +473,7 @@ abstract class AbstractDriver implements DatabaseInterface
      * Override in driver for DB-specific quoting (e.g., backticks for MySQL).
      *
      * @param string $identifier Table or column name
+     *
      * @return string Quoted identifier
      */
     protected function quoteIdentifier(string $identifier): string
@@ -463,7 +482,7 @@ abstract class AbstractDriver implements DatabaseInterface
         if (str_contains($identifier, '.')) {
             $parts = explode('.', $identifier);
             return implode('.', array_map(
-                fn($part) => '"' . str_replace('"', '""', $part) . '"',
+                fn ($part) => '"' . str_replace('"', '""', $part) . '"',
                 $parts
             ));
         }
@@ -474,8 +493,9 @@ abstract class AbstractDriver implements DatabaseInterface
     /**
      * Build WHERE clause from conditions array.
      *
-     * @param array $where Column => value pairs
-     * @return array [sql, params] - SQL string and parameter values
+     * @param array<string, mixed> $where Column => value pairs
+     *
+     * @return array{0: string, 1: array<int, mixed>} [sql, params] - SQL string and parameter values
      */
     protected function buildWhereClause(array $where): array
     {
@@ -512,7 +532,6 @@ abstract class AbstractDriver implements DatabaseInterface
      * Create a query builder for the given table.
      *
      * @param string $table Table name (supports schema.table format)
-     * @return \Hd3r\PdoWrapper\Query\QueryBuilder
      */
     public function table(string $table): \Hd3r\PdoWrapper\Query\QueryBuilder
     {

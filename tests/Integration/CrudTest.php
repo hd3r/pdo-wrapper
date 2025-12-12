@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
 use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\DatabaseInterface;
 use Hd3r\PdoWrapper\Exception\QueryException;
+use PHPUnit\Framework\TestCase;
 
 class CrudTest extends TestCase
 {

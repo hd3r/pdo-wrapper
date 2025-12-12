@@ -31,7 +31,7 @@ trait HasHooks
      * Trigger all callbacks for an event.
      *
      * @param string $event Event name
-     * @param array $data Event data to pass to callbacks
+     * @param array<string, mixed> $data Event data to pass to callbacks
      */
     protected function trigger(string $event, array $data): void
     {
