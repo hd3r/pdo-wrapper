@@ -328,6 +328,41 @@ class QueryBuilderTest extends TestCase
         $this->assertSame(2, $count);
     }
 
+    /**
+     * Regression test: Aggregates must ignore limit/offset.
+     *
+     * Previously, count() on a query with limit(10) would return max 10,
+     * instead of the total count. This broke pagination patterns like:
+     * $total = $query->count(); $page = $query->limit(10)->get();
+     */
+    public function testAggregatesIgnoreLimitAndOffset(): void
+    {
+        // count() should return total, not limited count
+        $builder = $this->db->table('users')->limit(1)->offset(1);
+        $this->assertSame(3, $builder->count());
+
+        // sum() should sum all rows, not limited
+        $builder = $this->db->table('users')->limit(1);
+        $this->assertEquals(75, $builder->sum('age')); // 25 + 30 + 20
+
+        // avg() should average all rows
+        $builder = $this->db->table('users')->limit(1);
+        $this->assertEquals(25, $builder->avg('age'));
+
+        // min/max should consider all rows
+        $builder = $this->db->table('users')->limit(1)->orderBy('age', 'DESC');
+        $this->assertEquals(20, $builder->min('age'));
+        $this->assertEquals(30, $builder->max('age'));
+
+        // limit/offset should still work for get() after aggregate
+        $builder = $this->db->table('users')->orderBy('id')->limit(2)->offset(1);
+        $builder->count(); // should not affect subsequent get()
+        $users = $builder->get();
+        $this->assertCount(2, $users);
+        $this->assertSame('Anna', $users[0]['name']); // offset=1 skips Max
+        $this->assertSame('Tom', $users[1]['name']);
+    }
+
     public function testCountWithColumn(): void
     {
         $this->db->execute("UPDATE users SET email = NULL WHERE name = 'Tom'");

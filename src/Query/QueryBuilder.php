@@ -601,6 +601,11 @@ class QueryBuilder
     private function aggregate(string $function, string $column): mixed
     {
         $originalColumns = $this->columns;
+        $originalLimit = $this->limit;
+        $originalOffset = $this->offset;
+
+        $this->limit = null;
+        $this->offset = null;
 
         if ($column === '*') {
             $this->columns = [new RawExpression("{$function}(*) as aggregate")];
@@ -613,6 +618,8 @@ class QueryBuilder
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $this->columns = $originalColumns;
+        $this->limit = $originalLimit;
+        $this->offset = $originalOffset;
 
         return $result['aggregate'] ?? null;
     }
