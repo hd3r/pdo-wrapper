@@ -610,9 +610,11 @@ class QueryBuilder
         $originalColumns = $this->columns;
         $originalLimit = $this->limit;
         $originalOffset = $this->offset;
+        $originalOrderBy = $this->orderBy;
 
         $this->limit = null;
         $this->offset = null;
+        $this->orderBy = [];
 
         if ($column === '*') {
             $this->columns = [new RawExpression("{$function}(*) as aggregate")];
@@ -628,6 +630,7 @@ class QueryBuilder
         $this->columns = $originalColumns;
         $this->limit = $originalLimit;
         $this->offset = $originalOffset;
+        $this->orderBy = $originalOrderBy;
 
         if ($result === false) {
             return null;
