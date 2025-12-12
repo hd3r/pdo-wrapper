@@ -209,7 +209,11 @@ abstract class AbstractDriver implements DatabaseInterface
             $this->commit();
             return $result;
         } catch (Throwable $e) {
-            $this->rollback();
+            try {
+                $this->rollback();
+            } catch (Throwable) {
+                // Rollback failed, but original exception is more important for debugging
+            }
             throw $e;
         }
     }
@@ -453,7 +457,11 @@ abstract class AbstractDriver implements DatabaseInterface
             return $affected;
         } catch (Throwable $e) {
             if ($manageTransaction) {
-                $this->rollback();
+                try {
+                    $this->rollback();
+                } catch (Throwable) {
+                    // Rollback failed, but original exception is more important for debugging
+                }
             }
             throw $e;
         }

@@ -153,6 +153,8 @@ $db->updateMultiple('users', [
 ], 'id');  // key column
 ```
 
+**Note:** This method executes one UPDATE query per row within a transaction. Best suited for batch sizes under ~100 rows. For larger datasets, consider using `execute()` with database-specific bulk update syntax (e.g., `INSERT ... ON DUPLICATE KEY UPDATE` for MySQL).
+
 ## Query Builder
 
 ### Basic Select

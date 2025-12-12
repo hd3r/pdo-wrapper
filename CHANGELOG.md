@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `first()` no longer mutates QueryBuilder state (now uses clone internally).
 - SQLite foreign key constraints are now enabled by default (`PRAGMA foreign_keys = ON`).
 - `updateMultiple()` now wraps operations in a transaction for atomicity.
-- Aggregate methods (`count()`, `sum()`, `avg()`, `min()`, `max()`) now ignore `limit()` and `offset()` for correct totals.
+- Aggregate methods (`count()`, `sum()`, `avg()`, `min()`, `max()`) now ignore `limit()`, `offset()`, and `orderBy()` for correct totals and PostgreSQL compatibility.
 - `insert()` now throws `QueryException` when `lastInsertId()` returns false.
+- Transaction rollback failures no longer mask the original exception.
 
 ### Added
 - PHPStan static analysis at level 9 (maximum strictness).
