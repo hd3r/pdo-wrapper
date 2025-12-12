@@ -84,6 +84,8 @@ All drivers support configuration via environment variables:
 // DB_SQLITE_PATH
 ```
 
+**Note:** Environment variables are read from `$_ENV`, not `getenv()`. This is a deliberate design decision for thread-safety. Use a library like [hd3r/env-loader](https://github.com/hd3r/env-loader) to load `.env` files into `$_ENV`.
+
 ## Raw Queries
 
 ```php
@@ -503,6 +505,23 @@ $db->table('users')->orderBy($column)->get();
 ```
 
 This applies to `select()`, `orderBy()`, `groupBy()`, and `join()`.
+
+## Limitations
+
+This library is designed for simple, common use cases. The following features are **not supported**:
+
+- **OR conditions** - All `where()` calls are joined with AND. For OR conditions, use raw queries:
+  ```php
+  $db->query('SELECT * FROM users WHERE role = ? OR role = ?', ['admin', 'moderator']);
+  ```
+
+- **Nested WHERE groups** - Complex conditions like `(A AND B) OR (C AND D)` require raw queries.
+
+- **Subqueries** - Use raw queries for subqueries in SELECT, WHERE, or FROM clauses.
+
+- **UNION** - Combine queries manually or use raw SQL.
+
+These limitations keep the QueryBuilder simple and predictable. For complex queries, use the `query()` method with raw SQL - prepared statements still protect against SQL injection.
 
 ## Requirements
 
