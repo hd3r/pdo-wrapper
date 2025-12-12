@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING**: Environment variable handling moved from drivers to `Database` factory class.
+  - Drivers now require explicit config array (no default ENV fallback).
+  - Use `Database::mysql()`, `Database::postgres()`, `Database::sqlite()` for ENV support.
+- Added `getenv()` fallback for legacy compatibility (`$_ENV` still takes priority for thread-safety).
+
 ### Fixed
 - `first()` no longer mutates QueryBuilder state (now uses clone internally).
 - SQLite foreign key constraints are now enabled by default (`PRAGMA foreign_keys = ON`).

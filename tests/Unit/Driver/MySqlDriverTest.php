@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Hd3r\PdoWrapper\Tests\Unit\Driver;
 
+use Hd3r\PdoWrapper\Database;
 use Hd3r\PdoWrapper\Driver\MySqlDriver;
 use Hd3r\PdoWrapper\Exception\ConnectionException;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +15,11 @@ class MySqlDriverTest extends TestCase
     {
         // Clean up ENV after each test
         unset($_ENV['DB_HOST'], $_ENV['DB_DATABASE'], $_ENV['DB_USERNAME'], $_ENV['DB_PASSWORD'], $_ENV['DB_PORT']);
+        putenv('DB_HOST');
+        putenv('DB_DATABASE');
+        putenv('DB_USERNAME');
+        putenv('DB_PASSWORD');
+        putenv('DB_PORT');
     }
 
     public function testThrowsExceptionWhenHostMissing(): void
@@ -59,7 +65,10 @@ class MySqlDriverTest extends TestCase
         $this->fail('Expected ConnectionException was not thrown');
     }
 
-    public function testReadsConfigFromEnv(): void
+    /**
+     * Test that Factory reads from $_ENV.
+     */
+    public function testFactoryReadsConfigFromEnv(): void
     {
         $_ENV['DB_HOST'] = 'invalid-host-that-does-not-exist';
         $_ENV['DB_DATABASE'] = 'testdb';
@@ -68,8 +77,48 @@ class MySqlDriverTest extends TestCase
 
         $this->expectException(ConnectionException::class);
 
-        // This will throw because host doesn't exist, but it proves ENV is read
-        new MySqlDriver();
+        // Factory reads $_ENV and passes to driver
+        Database::mysql();
+    }
+
+    /**
+     * Test that Factory reads from getenv() as fallback.
+     */
+    public function testFactoryReadsConfigFromGetenv(): void
+    {
+        putenv('DB_HOST=getenv-host-invalid');
+        putenv('DB_DATABASE=testdb');
+        putenv('DB_USERNAME=testuser');
+
+        $this->expectException(ConnectionException::class);
+
+        try {
+            Database::mysql();
+        } catch (ConnectionException $e) {
+            $this->assertStringContainsString('getenv-host-invalid', $e->getDebugMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Test that $_ENV has priority over getenv().
+     */
+    public function testEnvHasPriorityOverGetenv(): void
+    {
+        $_ENV['DB_HOST'] = 'env-host-invalid';
+        putenv('DB_HOST=getenv-host-should-not-be-used');
+        $_ENV['DB_DATABASE'] = 'testdb';
+        $_ENV['DB_USERNAME'] = 'testuser';
+
+        $this->expectException(ConnectionException::class);
+
+        try {
+            Database::mysql();
+        } catch (ConnectionException $e) {
+            $this->assertStringContainsString('env-host-invalid', $e->getDebugMessage());
+            $this->assertStringNotContainsString('getenv-host', $e->getDebugMessage());
+            throw $e;
+        }
     }
 
     public function testArrayConfigOverridesEnv(): void
@@ -81,7 +130,7 @@ class MySqlDriverTest extends TestCase
         $this->expectException(ConnectionException::class);
 
         try {
-            new MySqlDriver([
+            Database::mysql([
                 'host' => 'array-host',
                 'database' => 'array-db',
                 'username' => 'array-user',
@@ -136,7 +185,7 @@ class MySqlDriverTest extends TestCase
         $this->expectException(ConnectionException::class);
 
         try {
-            new MySqlDriver();
+            Database::mysql();
         } catch (ConnectionException $e) {
             $this->assertStringContainsString(':3308', $e->getDebugMessage());
             throw $e;

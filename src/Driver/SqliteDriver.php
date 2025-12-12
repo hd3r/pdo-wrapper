@@ -12,23 +12,19 @@ use PDOException;
  * SQLite database driver.
  *
  * Connects to SQLite databases using PDO.
- * Defaults to in-memory database if no path specified.
+ * Use Database::sqlite() factory for environment variable support.
  */
 class SqliteDriver extends AbstractDriver
 {
     /**
      * Create a SQLite database connection.
      *
-     * @param string|null $path Path to SQLite file, ':memory:' for in-memory, or null
-     *                          Falls back to DB_SQLITE_PATH env var, then ':memory:'
+     * @param string $path Path to SQLite file or ':memory:' for in-memory database
      *
      * @throws ConnectionException When connection fails
      */
-    public function __construct(?string $path = null)
+    public function __construct(string $path = ':memory:')
     {
-        $envPath = $_ENV['DB_SQLITE_PATH'] ?? null;
-        $path = $path ?? ($envPath !== null ? (string)$envPath : ':memory:');
-
         $dsn = sprintf('sqlite:%s', $path);
 
         $defaultOptions = [

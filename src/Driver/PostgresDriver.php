@@ -12,7 +12,7 @@ use PDOException;
  * PostgreSQL database driver.
  *
  * Connects to PostgreSQL databases using PDO.
- * Supports configuration via array or environment variables.
+ * Use Database::postgres() factory for environment variable support.
  */
 class PostgresDriver extends AbstractDriver
 {
@@ -27,21 +27,17 @@ class PostgresDriver extends AbstractDriver
      * - port: Server port (default: 5432)
      * - options: Additional PDO options
      *
-     * Falls back to environment variables: DB_HOST, DB_DATABASE,
-     * DB_USERNAME, DB_PASSWORD, DB_PORT
-     *
-     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, options?: array<int, mixed>} $config
+     * @param array{host?: string|null, database?: string|null, username?: string|null, password?: string|null, port?: int, options?: array<int, mixed>} $config
      *
      * @throws ConnectionException When required config is missing or connection fails
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config)
     {
-        $host = $config['host'] ?? $_ENV['DB_HOST'] ?? null;
-        $database = $config['database'] ?? $_ENV['DB_DATABASE'] ?? null;
-        $username = $config['username'] ?? $_ENV['DB_USERNAME'] ?? null;
-        $password = $config['password'] ?? $_ENV['DB_PASSWORD'] ?? null;
-        $envPort = $_ENV['DB_PORT'] ?? null;
-        $port = $config['port'] ?? (is_numeric($envPort) ? (int)$envPort : 5432);
+        $host = $config['host'] ?? null;
+        $database = $config['database'] ?? null;
+        $username = $config['username'] ?? null;
+        $password = $config['password'] ?? null;
+        $port = $config['port'] ?? 5432;
 
         if ($host === null || $database === null || $username === null) {
             throw new ConnectionException(
@@ -49,12 +45,6 @@ class PostgresDriver extends AbstractDriver
                 debugMessage: 'Missing required config: host, database, or username'
             );
         }
-
-        // Type assertions after null check
-        $host = (string)$host;
-        $database = (string)$database;
-        $username = (string)$username;
-        $password = $password !== null ? (string)$password : null;
 
         $dsn = sprintf(
             'pgsql:host=%s;port=%d;dbname=%s',

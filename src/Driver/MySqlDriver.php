@@ -12,7 +12,7 @@ use PDOException;
  * MySQL database driver.
  *
  * Connects to MySQL databases using PDO with utf8mb4 charset by default.
- * Supports configuration via array or environment variables.
+ * Use Database::mysql() factory for environment variable support.
  */
 class MySqlDriver extends AbstractDriver
 {
@@ -28,21 +28,17 @@ class MySqlDriver extends AbstractDriver
      * - charset: Connection charset (default: utf8mb4)
      * - options: Additional PDO options
      *
-     * Falls back to environment variables: DB_HOST, DB_DATABASE,
-     * DB_USERNAME, DB_PASSWORD, DB_PORT
-     *
-     * @param array{host?: string, database?: string, username?: string, password?: string, port?: int, charset?: string, options?: array<int, mixed>} $config
+     * @param array{host?: string|null, database?: string|null, username?: string|null, password?: string|null, port?: int, charset?: string, options?: array<int, mixed>} $config
      *
      * @throws ConnectionException When required config is missing or connection fails
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config)
     {
-        $host = $config['host'] ?? $_ENV['DB_HOST'] ?? null;
-        $database = $config['database'] ?? $_ENV['DB_DATABASE'] ?? null;
-        $username = $config['username'] ?? $_ENV['DB_USERNAME'] ?? null;
-        $password = $config['password'] ?? $_ENV['DB_PASSWORD'] ?? null;
-        $envPort = $_ENV['DB_PORT'] ?? null;
-        $port = $config['port'] ?? (is_numeric($envPort) ? (int)$envPort : 3306);
+        $host = $config['host'] ?? null;
+        $database = $config['database'] ?? null;
+        $username = $config['username'] ?? null;
+        $password = $config['password'] ?? null;
+        $port = $config['port'] ?? 3306;
         $charset = $config['charset'] ?? 'utf8mb4';
 
         if ($host === null || $database === null || $username === null) {
@@ -51,12 +47,6 @@ class MySqlDriver extends AbstractDriver
                 debugMessage: 'Missing required config: host, database, or username'
             );
         }
-
-        // Type assertions after null check
-        $host = (string)$host;
-        $database = (string)$database;
-        $username = (string)$username;
-        $password = $password !== null ? (string)$password : null;
 
         $dsn = sprintf(
             'mysql:host=%s;port=%d;dbname=%s;charset=%s',
