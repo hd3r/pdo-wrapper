@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hd3r\PdoWrapper\Driver;
 
 use Hd3r\PdoWrapper\Exception\ConnectionException;
+use Hd3r\PdoWrapper\Exception\QueryException;
 use PDO;
 use PDOException;
 
@@ -71,5 +72,57 @@ class PostgresDriver extends AbstractDriver
                 debugMessage: sprintf('PostgreSQL connection to %s:%d failed: %s', $host, $port, $e->getMessage())
             );
         }
+    }
+
+    /**
+     * Insert a row and return the last insert ID.
+     *
+     * PostgreSQL-specific implementation using RETURNING clause for reliable ID retrieval.
+     * This avoids issues with lastInsertId() requiring sequence names.
+     *
+     * Note: Assumes primary key column is named 'id'. For tables with different
+     * primary key names, use a raw query with RETURNING clause instead.
+     *
+     * @param string $table Table name (supports schema.table format)
+     * @param array<string, mixed> $data Column => value pairs
+     *
+     * @throws QueryException When $data is empty or query fails
+     *
+     * @return int|string Last insert ID
+     */
+    public function insert(string $table, array $data): int|string
+    {
+        if (empty($data)) {
+            throw new QueryException(
+                message: 'Insert failed',
+                debugMessage: 'Cannot insert empty data'
+            );
+        }
+
+        $columns = array_keys($data);
+        $placeholders = array_fill(0, count($columns), '?');
+
+        $sql = sprintf(
+            'INSERT INTO %s (%s) VALUES (%s) RETURNING id',
+            $this->quoteIdentifier($table),
+            implode(', ', array_map([$this, 'quoteIdentifier'], $columns)),
+            implode(', ', $placeholders)
+        );
+
+        $stmt = $this->query($sql, array_values($data));
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result === false || !isset($result['id'])) {
+            throw new QueryException(
+                message: 'Insert failed',
+                debugMessage: sprintf('Could not retrieve ID via RETURNING clause | SQL: %s', $sql)
+            );
+        }
+
+        /** @var int|string $id */
+        $id = $result['id'];
+
+        return $id;
     }
 }

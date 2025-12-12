@@ -523,6 +523,12 @@ This library is designed for simple, common use cases. The following features ar
 
 - **UNION** - Combine queries manually or use raw SQL.
 
+- **PostgreSQL primary key convention** - `insert()` assumes the primary key column is named `id`. For custom PK names, use raw query with `RETURNING`:
+  ```php
+  $stmt = $db->query('INSERT INTO users (name) VALUES (?) RETURNING user_id', ['John']);
+  $userId = $stmt->fetch()['user_id'];
+  ```
+
 These limitations keep the QueryBuilder simple and predictable. For complex queries, use the `query()` method with raw SQL - prepared statements still protect against SQL injection.
 
 ## Requirements

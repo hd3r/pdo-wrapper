@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2025-12-13
+
+### Fixed
+- PostgreSQL `insert()` now uses `RETURNING id` for reliable ID retrieval instead of `lastInsertId()`.
+  - Fixes issue where `lastInsertId()` returns empty string without explicit sequence name.
+  - Note: Assumes primary key column is named `id`. For other PK names, use raw query with `RETURNING`.
+
 ## [1.2.0] - 2025-12-12
 
 ### Changed
@@ -86,7 +93,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `QueryException`
   - `TransactionException`
 
-[Unreleased]: https://github.com/hd3r/pdo-wrapper/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/hd3r/pdo-wrapper/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/hd3r/pdo-wrapper/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/hd3r/pdo-wrapper/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/hd3r/pdo-wrapper/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/hd3r/pdo-wrapper/releases/tag/v1.0.0
